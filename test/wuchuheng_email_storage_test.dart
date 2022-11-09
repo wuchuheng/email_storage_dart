@@ -1,8 +1,16 @@
-import 'package:wuchuheng_email_storage/wuchuheng_email_storage.dart';
 import 'package:test/test.dart';
+import 'package:wuchuheng_email_storage/dto/email_account/email_account.dart';
+import 'package:wuchuheng_email_storage/wuchuheng_email_storage.dart';
 
 void main() {
-  test('calculate', () {
-    expect(calculate(), 42);
+  test('SMTP connecting test ', () async {
+    final EmailAccount emailAccount = EmailAccount(
+      imapHost: 'imap.qq.com',
+      smtpHost: 'smtp.163.com',
+      password: 'JAYHEOQDHZEXKIVJ',
+      userName: 'tnmrlj@163.com',
+    );
+    await connect(emailAccount);
+    print('ok');
   });
 }
