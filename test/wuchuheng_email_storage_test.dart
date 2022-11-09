@@ -5,9 +5,9 @@ import 'package:wuchuheng_email_storage/wuchuheng_email_storage.dart';
 void main() {
   test('SMTP connecting test ', () async {
     final EmailAccount emailAccount = EmailAccount(
-      imapHost: 'imap.qq.com',
+      imapHost: 'imap.163.com',
       smtpHost: 'smtp.163.com',
-      password: 'JAYHEOQDHZEXKIVJ',
+      password: 'JAYHEOQDHZEXKdfIVJ--',
       userName: 'tnmrlj@163.com',
     );
     await connect(emailAccount);

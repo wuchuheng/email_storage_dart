@@ -7,14 +7,15 @@ class SmtpService implements SmtpServiceAbstract {
   @override
   Future<SmtpClient> connect(EmailAccount emailAccount) async {
     final password = emailAccount.password;
+    final userName = emailAccount.userName;
     final client = SmtpClient(emailAccount.smtpHost, isLogEnabled: true);
     await client.connectToServer(emailAccount.smtpHost, emailAccount.smtpPort,
         isSecure: emailAccount.smtpTls, timeout: Duration(seconds: 60));
     await client.ehlo();
     if (client.serverInfo.supportsAuth(AuthMechanism.plain)) {
-      await client.authenticate('user.name', password, AuthMechanism.plain);
+      await client.authenticate(userName, password, AuthMechanism.plain);
     } else if (client.serverInfo.supportsAuth(AuthMechanism.login)) {
-      await client.authenticate('user.name', password, AuthMechanism.login);
+      await client.authenticate(userName, password, AuthMechanism.login);
     }
     return client;
   }
