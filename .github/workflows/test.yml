@@ -1,0 +1,23 @@
+name: Libery testing
+
+on:
+  push:
+    branches:
+      - dev
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+      - uses: dart-lang/setup-dart@v1.3
+      - name: Install dependencies
+        run: dart pub get
+      - name: Set up env
+        run: echo 'IMAP_HOST:${{ secrets.IMAP_HOST}}' >> test/.env
+      - run: echo 'SMTP_HOST:${{ secrets.SMTP_HOST}}' >> test/.env
+      - run: echo 'USERNAME:${{ secrets.USERNAME}}' >> test/.env
+      - run: echo 'PASSWORD:${{ secrets.PASSWORD}}' >> test/.env
+      - run: cat test/.env
+      - name: Testing
+        run: dart test
