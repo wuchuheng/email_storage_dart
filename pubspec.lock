@@ -547,6 +547,13 @@ packages:
       url: "https://pub.dartlang.org"
     source: hosted
     version: "1.2.0"
+  wuchuheng_env:
+    dependency: "direct main"
+    description:
+      name: wuchuheng_env
+      url: "https://pub.dartlang.org"
+    source: hosted
+    version: "1.0.4"
   wuchuheng_hooks:
     dependency: transitive
     description:
