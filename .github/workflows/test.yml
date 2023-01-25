@@ -19,6 +19,7 @@ jobs:
       - run: echo 'SMTP_HOST=${{ secrets.SMTP_HOST}}' >> test/.env
       - run: echo 'USERNAME=${{ secrets.USERNAME}}' >> test/.env
       - run: echo 'PASSWORD=${{ secrets.PASSWORD}}' >> test/.env
+      - run: echo 'STORAGE_NAME=${{ secrets.STORAGE_NAME}}' >> test/.env
       - run: cat test/.env
       - name: Testing
         run: dart test
