@@ -11,6 +11,7 @@ EmailAccount _$EmailAccountFromJson(Map<String, dynamic> json) => EmailAccount(
       smtpHost: json['smtpHost'] as String,
       password: json['password'] as String,
       userName: json['userName'] as String,
+      storageName: json['storageName'] as String,
       smtpPort: json['smtpPort'] as int? ?? 465,
       imapPort: json['imapPort'] as int? ?? 995,
       imapTls: json['imapTls'] as bool? ?? true,
@@ -27,4 +28,5 @@ Map<String, dynamic> _$EmailAccountToJson(EmailAccount instance) =>
       'smtpHost': instance.smtpHost,
       'smtpPort': instance.smtpPort,
       'smtpTls': instance.smtpTls,
+      'storageName': instance.storageName,
     };

@@ -3,5 +3,7 @@ import 'package:enough_mail/enough_mail.dart';
 import '../../dto/email_account/email_account.dart';
 
 abstract class SmtpServiceAbstract {
-  Future<SmtpClient> connect(EmailAccount account);
+  late SmtpClient smtpClient;
+
+  Future<SmtpClient> connect({required EmailAccount emailAccount, required bool isLogEnabled});
 }

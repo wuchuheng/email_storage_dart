@@ -6,3 +6,4 @@
 # Conventional directory for build output.
 build/
 test/.env
+test/tmp_test.dart

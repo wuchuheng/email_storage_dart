@@ -12,14 +12,16 @@ class EmailAccount {
   final String smtpHost;
   final int smtpPort;
   final bool smtpTls;
+  final String storageName;
 
   EmailAccount({
     required this.imapHost,
     required this.smtpHost,
     required this.password,
     required this.userName,
+    required this.storageName,
     this.smtpPort = 465,
-    this.imapPort = 995,
+    this.imapPort = 993,
     this.imapTls = true,
     this.smtpTls = true,
   }) {
