@@ -1,7 +1,5 @@
 part of 'imap_component.dart';
 
-bool isLogEnabled = true;
-
 Future<Task> _createMiddleware() {
   return IsolateTask((message, channel) async {
     final ChannelName channelName = enumFromString<ChannelName>(ChannelName.values, channel.name);
@@ -11,7 +9,6 @@ Future<Task> _createMiddleware() {
         imapClient = await imapComponetController.connect(
           emailAccount: message,
           channel: channel,
-          isLogEnabled: isLogEnabled,
         );
         break;
       case ChannelName.isBoxExisted:
@@ -20,7 +17,7 @@ Future<Task> _createMiddleware() {
         break;
       case ChannelName.setIsLogEnabled:
         assert(message is bool);
-        isLogEnabled = message;
+        imapComponetController.isLogEnabled = message;
         channel.send('');
         break;
     }

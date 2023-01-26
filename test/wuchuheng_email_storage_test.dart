@@ -16,6 +16,6 @@ void main() {
       userName: DotEnv.get('USERNAME', ''),
       storageName: DotEnv.get('STORAGE_NAME', ''),
     );
-    await connect(emailAccount);
-  });
+    await connect(emailAccount: emailAccount, isLogEnabled: true);
+  }, timeout: Timeout(Duration(seconds: 5 * 60)));
 }

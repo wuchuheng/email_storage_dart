@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:wuchuheng_email_storage/components/connect_component/common/set_is_log_enabled.dart';
 import 'package:wuchuheng_isolate_channel/wuchuheng_isolate_channel.dart';
 
 import '../../dto/channel_name/channel_name.dart';
@@ -11,8 +12,9 @@ import 'connect_component_middleware.dart';
 
 late Task task;
 
-Future<EmailStorageMiddlewareAbstract> connect(EmailAccount emailAccount) async {
+Future<EmailStorageMiddlewareAbstract> connect({required EmailAccount emailAccount, bool isLogEnabled = false}) async {
   task = await createConnectMiddleWareMiddleTask();
+  await setIsLogEnabled(task: task, channelName: ChannelName.setIsLogEnabled.name, isLogEnabled: isLogEnabled);
   final ChannelAbstract channel = task.createChannel(name: ChannelName.connect.name);
   Completer<void> completer = Completer();
   channel.listen((message, channel) async {

@@ -2,9 +2,10 @@ import 'package:enough_mail/enough_mail.dart';
 import 'package:wuchuheng_email_storage/dto/email_account/email_account.dart';
 import 'package:wuchuheng_isolate_channel/wuchuheng_isolate_channel.dart';
 
-final bool isLogEnabled = true;
+bool isLogEnabled = true;
 
 late SmtpClient smtpClient;
+
 Future<void> connect({
   required EmailAccount emailAccount,
   required ChannelAbstract channel,

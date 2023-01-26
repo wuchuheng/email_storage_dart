@@ -4,11 +4,12 @@ import 'package:wuchuheng_isolate_channel/src/service/channel/channel_abstract.d
 
 import 'imap_component.dart';
 
+bool isLogEnabled = true;
+
 /// To connect imap server from local to online.
 Future<ImapClient> connect({
   required EmailAccount emailAccount,
   required ChannelAbstract channel,
-  required bool isLogEnabled,
 }) async {
   final password = emailAccount.password;
   final userName = emailAccount.userName;

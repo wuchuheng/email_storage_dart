@@ -8,7 +8,7 @@ import 'imap_component/imap_component.dart' as imapComponent;
 import 'smtp_component/smtp_component.dart' as smtpComponent;
 
 const storageDirectoryPrefix = 'storage';
-final bool isLogEnabled = true;
+bool isLogEnabled = false;
 
 Future<void> connect({required String message, required ChannelAbstract channel}) async {
   final emailAccount = EmailAccount.fromJson(

@@ -15,6 +15,11 @@ Future<Task> createConnectMiddleWareMiddleTask() async {
             channel: channel,
           );
           break;
+        case ChannelName.setIsLogEnabled:
+          assert(message is bool);
+          isLogEnabled = message as bool;
+          channel.send('');
+          break;
       }
     },
   );
