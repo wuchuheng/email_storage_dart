@@ -10,12 +10,12 @@ import '../../middleware/email_storage_middleware/email_storage_middleware.dart'
 import '../../middleware/email_storage_middleware/email_storage_middleware_abstract.dart';
 import 'connect_component_middleware.dart';
 
-late Task task;
+late Task<ChannelName> task;
 
 Future<EmailStorageMiddlewareAbstract> connect({required EmailAccount emailAccount, bool isLogEnabled = false}) async {
   task = await createConnectMiddleWareMiddleTask();
-  await setIsLogEnabled(task: task, channelName: ChannelName.setIsLogEnabled.name, isLogEnabled: isLogEnabled);
-  final ChannelAbstract channel = task.createChannel(name: ChannelName.connect.name);
+  await setIsLogEnabled<ChannelName>(task: task, channelName: ChannelName.setIsLogEnabled, isLogEnabled: isLogEnabled);
+  final ChannelAbstract channel = task.createChannel(name: ChannelName.connect);
   Completer<void> completer = Completer();
   channel.listen((message, channel) async {
     completer.complete();

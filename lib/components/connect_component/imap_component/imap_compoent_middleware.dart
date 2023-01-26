@@ -1,9 +1,8 @@
 part of 'imap_component.dart';
 
-Future<Task> _createMiddleware() {
-  return IsolateTask((message, channel) async {
-    final ChannelName channelName = enumFromString<ChannelName>(ChannelName.values, channel.name);
-    switch (channelName) {
+Future<Task<ChannelName>> _createMiddleware() {
+  return IsolateTask<ChannelName>((message, channel) async {
+    switch (channel.name) {
       case ChannelName.connect:
         assert(message is EmailAccount);
         imapClient = await imapComponetController.connect(
