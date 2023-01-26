@@ -33,3 +33,9 @@ Future<void> isBoxExisted({required String boxName, required ChannelAbstract cha
   assert(boxes.length < 2);
   channel.send(boxes.isNotEmpty);
 }
+
+/// To create box on imap protocol.
+Future<void> createBoxName({required String boxName, required ChannelAbstract<ChannelName> channel}) async {
+  await imapClient.createMailbox(boxName);
+  channel.send('');
+}

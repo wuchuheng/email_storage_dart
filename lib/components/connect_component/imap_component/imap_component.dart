@@ -13,7 +13,7 @@ late ImapClient imapClient;
 
 late Task<ChannelName> task;
 
-enum ChannelName { connect, isBoxExisted, setIsLogEnabled }
+enum ChannelName { connect, isBoxExisted, setIsLogEnabled, createBoxName }
 
 // Connect to imap server with email account.
 Future<void> connect({required EmailAccount emailAccount, required bool isLogEnabled}) async {
@@ -30,6 +30,20 @@ Future<void> connect({required EmailAccount emailAccount, required bool isLogEna
   return comparable.future;
 }
 
+// Create box on Imap protocol.
+Future<void> createBoxName({required String boxName}) async {
+  Completer<void> completer = Completer();
+  final channel = task.createChannel(name: ChannelName.createBoxName)
+    ..listen((message, channel) async {
+      completer.complete();
+      channel.close();
+    });
+  channel.send(boxName);
+
+  return completer.future;
+}
+
+// To check the box name exist
 Future<bool> isBoxExisted({required String boxName}) async {
   ChannelAbstract channel = task.createChannel(name: ChannelName.isBoxExisted);
   Completer<bool> completer = Completer();

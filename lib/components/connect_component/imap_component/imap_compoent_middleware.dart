@@ -19,6 +19,10 @@ Future<Task<ChannelName>> _createMiddleware() {
         imapComponetController.isLogEnabled = message;
         channel.send('');
         break;
+      case ChannelName.createBoxName:
+        assert(message is String);
+        await imapComponetController.createBoxName(boxName: message, channel: channel);
+        break;
     }
   });
 }

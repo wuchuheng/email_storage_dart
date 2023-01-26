@@ -16,10 +16,12 @@ Future<void> connect({required String message, required ChannelAbstract channel}
   );
   await smtpComponent.connect(emailAccount: emailAccount, isLogEnabled: isLogEnabled);
   await imapComponent.connect(emailAccount: emailAccount, isLogEnabled: isLogEnabled);
-  await imapComponent.isBoxExisted(
-      boxName: convertPathToEmailPath(
-    '${emailAccount.storageName}/$storageDirectoryPrefix',
-  ));
+
+  final String boxName = convertPathToEmailPath('${emailAccount.storageName}/$storageDirectoryPrefix');
+  final bool isExisted = await imapComponent.isBoxExisted(boxName: boxName);
+  if (!isExisted) {
+    await imapComponent.createBoxName(boxName: boxName);
+  }
 
   channel.send('');
 }
