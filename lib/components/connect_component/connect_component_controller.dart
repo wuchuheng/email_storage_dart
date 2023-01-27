@@ -7,7 +7,7 @@ import '../../utils/convert_path_util.dart';
 import 'imap_component/imap_component.dart' as imapComponent;
 import 'smtp_component/smtp_component.dart' as smtpComponent;
 
-const storageDirectoryPrefix = 'storage';
+String storageDirectoryPrefix = 'storage';
 bool isLogEnabled = false;
 
 Future<void> connect({required String message, required ChannelAbstract channel}) async {
@@ -17,7 +17,7 @@ Future<void> connect({required String message, required ChannelAbstract channel}
   await smtpComponent.connect(emailAccount: emailAccount, isLogEnabled: isLogEnabled);
   await imapComponent.connect(emailAccount: emailAccount, isLogEnabled: isLogEnabled);
 
-  final String boxName = convertPathToEmailPath('${emailAccount.storageName}/$storageDirectoryPrefix');
+  final String boxName = convertPathToStorageEmailPath(path: '/', prefix: emailAccount.storageName);
   final bool isExisted = await imapComponent.isBoxExisted(boxName: boxName);
   if (!isExisted) {
     await imapComponent.createBoxName(boxName: boxName);

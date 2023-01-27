@@ -70,6 +70,9 @@ String convertPathToEmailPath(String path) {
   return path;
 }
 
+String convertPathToStorageEmailPath({required String path, required String prefix}) =>
+    convertPathToEmailPath('$prefix/storage$path');
+
 String convertEmailPathToPath(String path) {
   _escapeCharacterMapSpecialCharacter.forEach((key, value) {
     path = path.replaceAll(key, value);
