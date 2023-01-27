@@ -20,6 +20,7 @@ jobs:
       - run: echo 'USERNAME=${{ secrets.USERNAME}}' >> test/.env
       - run: echo 'PASSWORD=${{ secrets.PASSWORD}}' >> test/.env
       - run: echo 'STORAGE_NAME=${{ secrets.STORAGE_NAME}}' >> test/.env
+      - run: echo 'LOCAL_STORAGE_PATH=/Users/wuchuheng/myProjects/wuchuheng/flutter/email_storage_dart/.cache' >> test/.env
       - run: cat test/.env
       - name: Testing
         run: dart test
