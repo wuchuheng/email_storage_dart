@@ -7,3 +7,9 @@
 ```bash
 $ dart pub run build_runner build  
 ```
+
+## 3 How to generate sqlite ORM? 
+
+```bash
+$ dart pub run build_runner build 
+```

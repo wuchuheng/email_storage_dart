@@ -5,18 +5,18 @@ import '../../dto/channel_name/channel_name.dart';
 import 'connect_component_controller.dart';
 
 /// This file is the interaction file for isolate between main thread and isolate thread.
-Future<Task<ChannelName>> createConnectMiddleWareMiddleTask() async {
-  Task<ChannelName> task = await IsolateTask<ChannelName>(
+Future<Task<ConnectChannelName>> createConnectMiddleWareMiddleTask() async {
+  Task<ConnectChannelName> task = await IsolateTask<ConnectChannelName>(
     (message, channel) async {
       switch (channel.name) {
-        case ChannelName.connect:
+        case ConnectChannelName.connect:
           assert(message is EmailAccount);
           await connect(
             emailAccount: message,
             channel: channel,
           );
           break;
-        case ChannelName.setIsLogEnabled:
+        case ConnectChannelName.setIsLogEnabled:
           assert(message is bool);
           isLogEnabled = message as bool;
           channel.send('');
