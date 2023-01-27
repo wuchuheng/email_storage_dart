@@ -16,6 +16,7 @@ void main() {
       password: DotEnv.get('PASSWORD', ''),
       userName: DotEnv.get('USERNAME', ''),
       storageName: DotEnv.get('STORAGE_NAME', ''),
+      localStoragePath: DotEnv.get('LOCAL_STORAGE_PATH', ''),
     );
     await cleanEmailBox(emailAccount: emailAccount);
   });

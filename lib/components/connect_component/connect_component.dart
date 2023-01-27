@@ -1,5 +1,4 @@
 import 'dart:async';
-import 'dart:convert';
 
 import 'package:wuchuheng_email_storage/components/connect_component/common/set_is_log_enabled.dart';
 import 'package:wuchuheng_isolate_channel/wuchuheng_isolate_channel.dart';
@@ -21,7 +20,7 @@ Future<EmailStorageMiddlewareAbstract> connect({required EmailAccount emailAccou
     completer.complete();
     channel.close();
   });
-  channel.send(jsonEncode(emailAccount));
+  channel.send(emailAccount);
   await completer.future;
 
   return EmailStoreMiddleWare(task: task);

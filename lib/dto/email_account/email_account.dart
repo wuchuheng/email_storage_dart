@@ -1,7 +1,5 @@
 import 'package:json_annotation/json_annotation.dart';
 
-part 'email_account.g.dart';
-
 @JsonSerializable()
 class EmailAccount {
   final String password;
@@ -13,6 +11,7 @@ class EmailAccount {
   final int smtpPort;
   final bool smtpTls;
   final String storageName;
+  final String localStoragePath;
 
   EmailAccount({
     required this.imapHost,
@@ -20,6 +19,7 @@ class EmailAccount {
     required this.password,
     required this.userName,
     required this.storageName,
+    required this.localStoragePath,
     this.smtpPort = 465,
     this.imapPort = 993,
     this.imapTls = true,
@@ -30,8 +30,4 @@ class EmailAccount {
     assert(smtpHost.isNotEmpty);
     assert(smtpPort > 0 && smtpPort < 65535);
   }
-
-  factory EmailAccount.fromJson(Map<String, dynamic> json) => _$EmailAccountFromJson(json);
-
-  Map<String, dynamic> toJson() => _$EmailAccountToJson(this);
 }

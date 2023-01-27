@@ -1,10 +1,16 @@
+import 'dart:io';
+
 import 'package:enough_mail/enough_mail.dart';
+import 'package:path/path.dart';
 import 'package:wuchuheng_email_storage/dto/email_account/email_account.dart';
 import 'package:wuchuheng_email_storage/utils/convert_path_util.dart';
 import 'package:wuchuheng_logger/wuchuheng_logger.dart';
 
 Future<void> cleanEmailBox({required EmailAccount emailAccount}) async {
   Logger.info('Before clean email box.', symbol: 'Testing');
+  final String localCachePath = join(emailAccount.localStoragePath, emailAccount.userName).toString();
+  final d = Directory(localCachePath);
+  if (await d.exists()) await d.delete(recursive: true);
   final password = emailAccount.password;
   final userName = emailAccount.userName;
   ImapClient imapClient = ImapClient(isLogEnabled: true, logName: "ImapLog");

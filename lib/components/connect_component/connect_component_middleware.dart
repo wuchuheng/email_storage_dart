@@ -1,3 +1,4 @@
+import 'package:wuchuheng_email_storage/dto/email_account/email_account.dart';
 import 'package:wuchuheng_isolate_channel/wuchuheng_isolate_channel.dart';
 
 import '../../dto/channel_name/channel_name.dart';
@@ -9,8 +10,9 @@ Future<Task<ChannelName>> createConnectMiddleWareMiddleTask() async {
     (message, channel) async {
       switch (channel.name) {
         case ChannelName.connect:
+          assert(message is EmailAccount);
           await connect(
-            message: message,
+            emailAccount: message,
             channel: channel,
           );
           break;

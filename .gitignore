@@ -7,3 +7,4 @@
 build/
 test/.env
 test/tmp_test.dart
+.cache/
