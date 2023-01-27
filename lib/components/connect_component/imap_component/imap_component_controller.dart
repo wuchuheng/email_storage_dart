@@ -1,5 +1,6 @@
 import 'package:enough_mail/enough_mail.dart';
 import 'package:wuchuheng_email_storage/dto/email_account/email_account.dart';
+import 'package:wuchuheng_email_storage/utils/convert_path_util.dart';
 import 'package:wuchuheng_isolate_channel/src/service/channel/channel_abstract.dart';
 
 import 'imap_component.dart';
@@ -27,15 +28,11 @@ Future<ImapClient> connect({
   return imapClient;
 }
 
-/// To check the box online if existed
-Future<void> isBoxExisted({required String boxName, required ChannelAbstract channel}) async {
-  List<Mailbox> boxes = await imapClient.listMailboxes(path: boxName);
+/// To check path existed or to create it.
+Future<void> checkPathExistedOrCreate({required String path, required ChannelAbstract<ImapChannelName> channel}) async {
+  path = convertPathToEmailPath(path);
+  List<Mailbox> boxes = await imapClient.listMailboxes(path: path);
   assert(boxes.length < 2);
-  channel.send(boxes.isNotEmpty);
-}
-
-/// To create box on imap protocol.
-Future<void> createBoxName({required String boxName, required ChannelAbstract<ChannelName> channel}) async {
-  await imapClient.createMailbox(boxName);
+  if (boxes.isEmpty) await imapClient.createMailbox(path);
   channel.send('');
 }

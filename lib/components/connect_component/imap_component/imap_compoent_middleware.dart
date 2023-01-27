@@ -1,27 +1,25 @@
 part of 'imap_component.dart';
 
-Future<Task<ChannelName>> _createMiddleware() {
-  return IsolateTask<ChannelName>((message, channel) async {
+late ImapClient imapClient;
+
+Future<Task<ImapChannelName>> _createMiddleware() {
+  return IsolateTask<ImapChannelName>((message, channel) async {
     switch (channel.name) {
-      case ChannelName.connect:
+      case ImapChannelName.connect:
         assert(message is EmailAccount);
         imapClient = await imapComponetController.connect(
           emailAccount: message,
           channel: channel,
         );
         break;
-      case ChannelName.isBoxExisted:
-        assert(message is String);
-        await imapComponetController.isBoxExisted(boxName: message, channel: channel);
-        break;
-      case ChannelName.setIsLogEnabled:
+      case ImapChannelName.setIsLogEnabled:
         assert(message is bool);
         imapComponetController.isLogEnabled = message;
         channel.send('');
         break;
-      case ChannelName.createBoxName:
+      case ImapChannelName.checkPathExistedOrCreate:
         assert(message is String);
-        await imapComponetController.createBoxName(boxName: message, channel: channel);
+        await imapComponetController.checkPathExistedOrCreate(path: message as String, channel: channel);
         break;
     }
   });

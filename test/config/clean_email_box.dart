@@ -22,7 +22,7 @@ Future<void> cleanEmailBox({required EmailAccount emailAccount}) async {
     timeout: const Duration(seconds: 60),
   );
   await imapClient.login(userName, password);
-  final String path = convertPathToStorageEmailPath(path: '/', prefix: emailAccount.storageName);
+  final String path = convertPathToEmailStoragePath(path: '/', emailAccount: emailAccount);
   // to delete recursive box on imap protocol.
   List<Mailbox> boxes = await imapClient.listMailboxes(path: path);
   for (Mailbox box in boxes) {
