@@ -1,13 +1,13 @@
 import 'dart:async';
 
 import 'package:enough_mail/enough_mail.dart';
-import 'package:wuchuheng_email_storage/components/connect_component/common/set_is_log_enabled.dart';
 import 'package:wuchuheng_email_storage/dto/email_account/email_account.dart';
+import 'package:wuchuheng_email_storage/modules/connect_module/common/set_is_log_enabled.dart';
 import 'package:wuchuheng_isolate_channel/wuchuheng_isolate_channel.dart';
 
-import 'imap_component_controller.dart' as imapComponetController;
+import 'imap_module_controller.dart' as imapComponetController;
 
-part 'imap_compoent_middleware.dart';
+part 'imap_module_middleware.dart';
 
 late Task<ImapChannelName> task;
 

@@ -1,16 +1,15 @@
 import 'dart:io';
 
 import 'package:enough_mail/enough_mail.dart';
-import 'package:wuchuheng_email_storage/components/connect_component/connect_component_service/connect_component_local_path_service.dart';
 import 'package:wuchuheng_email_storage/config/config.dart';
 import 'package:wuchuheng_email_storage/dto/email_account/email_account.dart';
+import 'package:wuchuheng_email_storage/modules/connect_module/connect_module_service/connect_module_local_path_service.dart';
 import 'package:wuchuheng_email_storage/utils/convert_path_util.dart';
 import 'package:wuchuheng_logger/wuchuheng_logger.dart';
 
 Future<void> cleanEmailBox({required EmailAccount emailAccount}) async {
   Logger.info('Before clean email box.', symbol: 'Testing');
-  final String localCachePath =
-      await ConnectComponentLocalPathService.getStoragePathOrCreate(emailAccount: emailAccount);
+  final String localCachePath = await ConnectModuleLocalPathService.getStoragePathOrCreate(emailAccount: emailAccount);
   final d = Directory(localCachePath);
   if (await d.exists()) {
     await d.delete(recursive: true);

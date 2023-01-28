@@ -1,4 +1,4 @@
-part of 'imap_component.dart';
+part of 'imap_module.dart';
 
 late ImapClient _imapClient;
 late EmailAccount _emailAccount;

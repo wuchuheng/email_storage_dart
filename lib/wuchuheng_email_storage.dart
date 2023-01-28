@@ -1,1 +1,1 @@
-export 'components/connect_component/connect_component.dart';
+export 'modules/connect_module/connect_module.dart';

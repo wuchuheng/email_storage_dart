@@ -5,9 +5,9 @@ import 'package:wuchuheng_email_storage/dto/email_account/email_account.dart';
 import 'package:wuchuheng_isolate_channel/wuchuheng_isolate_channel.dart';
 
 import '../common/set_is_log_enabled.dart';
-import 'stmp_component_controller.dart' as smtpComponentController;
+import 'stmp_module_controller.dart' as smtpModuleController;
 
-part 'smtp_component_middleware.dart';
+part 'smtp_module_middleware.dart';
 
 late Task<ChannelName> task;
 

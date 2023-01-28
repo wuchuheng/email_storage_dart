@@ -1,4 +1,4 @@
-part of "smtp_component.dart";
+part of "smtp_module.dart";
 
 enum ChannelName { connect, setIsLogEnabled }
 
@@ -7,11 +7,11 @@ Future<Task<ChannelName>> createMiddleware() async {
     switch (channel.name) {
       case ChannelName.connect:
         assert(message is EmailAccount);
-        await smtpComponentController.connect(emailAccount: message, channel: channel);
+        await smtpModuleController.connect(emailAccount: message, channel: channel);
         break;
       case ChannelName.setIsLogEnabled:
         assert(message is bool);
-        smtpComponentController.isLogEnabled = message as bool;
+        smtpModuleController.isLogEnabled = message as bool;
         channel.send('');
         break;
     }
