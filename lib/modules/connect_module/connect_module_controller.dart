@@ -4,6 +4,7 @@ import 'package:wuchuheng_email_storage/modules/connect_module/database_module/d
 import 'package:wuchuheng_isolate_channel/wuchuheng_isolate_channel.dart';
 
 import '../../dto/email_account/email_account.dart';
+import 'database_module/model/path_model.dart';
 import 'imap_module/imap_module.dart' as imapModule;
 import 'smtp_module/smtp_module.dart' as smtpModule;
 
@@ -21,7 +22,9 @@ Future<void> connect({required EmailAccount emailAccount, required ChannelAbstra
   final String localCachePath = await ConnectModuleLocalPathService.getStoragePathOrCreate(
     emailAccount: emailAccount,
   );
+  // Get the Single instance database.
   database = AppDb(dbSavedPath: localCachePath);
-  // await database.into(database.path).insert(PathData(name: path));
+  // Check the root path or creating in the database.
+  await Path.checkPathListOrCreate(database: database, pathList: pathList);
   channel.send('');
 }

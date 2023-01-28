@@ -453,7 +453,8 @@ class $PathTable extends Path with TableInfo<$PathTable, PathData> {
             minTextLength: 1,
           ),
           type: DriftSqlType.string,
-          requiredDuringInsert: true);
+          requiredDuringInsert: true,
+          defaultConstraints: GeneratedColumn.constraintIsAlways('UNIQUE'));
   static const VerificationMeta _pidMeta = const VerificationMeta('pid');
   @override
   late final GeneratedColumn<int> pid = GeneratedColumn<int>(
