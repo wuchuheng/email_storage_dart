@@ -3,8 +3,6 @@ import 'package:wuchuheng_email_storage/dto/email_account/email_account.dart';
 import 'package:wuchuheng_email_storage/utils/convert_path_util.dart';
 import 'package:wuchuheng_isolate_channel/src/service/channel/channel_abstract.dart';
 
-import 'imap_component.dart';
-
 bool isLogEnabled = true;
 
 /// To connect imap server from local to online.
@@ -28,11 +26,27 @@ Future<ImapClient> connect({
   return imapClient;
 }
 
-/// To check path existed or to create it.
-Future<void> checkPathExistedOrCreate({required String path, required ChannelAbstract<ImapChannelName> channel}) async {
-  path = convertPathToEmailPath(path);
-  List<Mailbox> boxes = await imapClient.listMailboxes(path: path);
-  assert(boxes.length < 2);
-  if (boxes.isEmpty) await imapClient.createMailbox(path);
-  channel.send('');
+// Get the path list or init that on IMAP server.
+Future<List<String>> getPathListOrInitByPrefixList({
+  required List<String> initPathList,
+  required EmailAccount emailAccount,
+  required ImapClient imapClient,
+}) async {
+  final String prefix = emailAccount.storageName;
+  final List<String> result = [];
+  for (String path in initPathList) {
+    path = convertPathToEmailPath(path: path, prefix: prefix);
+    final List<Mailbox> boxes = await imapClient.listMailboxes(path: path);
+    if (boxes.isNotEmpty) {
+      for (Mailbox element in boxes) {
+        path = convertEmailPathToPath(path: element.path, prefix: prefix);
+        result.add(path);
+      }
+    } else {
+      await imapClient.createMailbox(path);
+      result.add(convertEmailPathToPath(path: path, prefix: prefix));
+    }
+  }
+
+  return result;
 }

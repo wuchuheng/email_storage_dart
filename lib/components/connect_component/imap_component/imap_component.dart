@@ -14,7 +14,7 @@ late Task<ImapChannelName> task;
 enum ImapChannelName {
   connect,
   setIsLogEnabled,
-  checkPathExistedOrCreate,
+  getPathListOrInitByPrefixList, // 获取IMAP上保存存储路径列表
 }
 
 // Connect to imap server with email account.
@@ -33,15 +33,16 @@ Future<void> connect({required EmailAccount emailAccount, required bool isLogEna
   return comparable.future;
 }
 
-// To check the path existed or to create it.
-Future<void> checkPathExistedOrCreate({required String path}) async {
-  ChannelAbstract channel = task.createChannel(name: ImapChannelName.checkPathExistedOrCreate);
-  Completer<void> completer = Completer();
-  channel.listen((message, channel) async {
-    completer.complete();
-    channel.close();
-  });
-  channel.send(path);
+// To get the list path or init the path from imap server.
+Future<List<String>> getPathListOrInitByPrefixList({required List<String> initPathList}) async {
+  Completer<List<String>> completer = Completer();
+  task.createChannel(name: ImapChannelName.getPathListOrInitByPrefixList)
+    ..listen((message, channel) async {
+      assert(message is List<String>);
+      completer.complete(message as List<String>);
+      channel.close();
+    })
+    ..send(initPathList);
 
   return completer.future;
 }

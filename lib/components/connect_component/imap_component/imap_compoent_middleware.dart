@@ -1,25 +1,29 @@
 part of 'imap_component.dart';
 
-late ImapClient imapClient;
+late ImapClient _imapClient;
+late EmailAccount _emailAccount;
 
 Future<Task<ImapChannelName>> _createMiddleware() {
   return IsolateTask<ImapChannelName>((message, channel) async {
     switch (channel.name) {
       case ImapChannelName.connect:
         assert(message is EmailAccount);
-        imapClient = await imapComponetController.connect(
-          emailAccount: message,
-          channel: channel,
-        );
+        _imapClient = await imapComponetController.connect(emailAccount: message, channel: channel);
+        _emailAccount = message;
         break;
       case ImapChannelName.setIsLogEnabled:
         assert(message is bool);
         imapComponetController.isLogEnabled = message;
         channel.send('');
         break;
-      case ImapChannelName.checkPathExistedOrCreate:
-        assert(message is String);
-        await imapComponetController.checkPathExistedOrCreate(path: message as String, channel: channel);
+      case ImapChannelName.getPathListOrInitByPrefixList:
+        assert(message is List<String>);
+        final List<String> result = await imapComponetController.getPathListOrInitByPrefixList(
+          initPathList: message as List<String>,
+          emailAccount: _emailAccount,
+          imapClient: _imapClient,
+        );
+        channel.send(result);
         break;
     }
   });

@@ -1,5 +1,4 @@
 import 'package:path/path.dart';
-import 'package:wuchuheng_email_storage/dto/email_account/email_account.dart';
 
 const Map<String, String> _specialCharacterMapEscapeCharacter = {
   '~': '-tildeAccent-',
@@ -65,7 +64,11 @@ const Map<String, String> _escapeCharacterMapSpecialCharacter = {
 
 /// To convert the path to email path that the email path not allow to includes some characters likes :
 ///
-String convertPathToEmailPath(String path) {
+String convertPathToEmailPath({required String path, required String prefix}) {
+  if (path.substring(0, 1) == '/') {
+    path = path.substring(1);
+  }
+  path = join(prefix, path).toString();
   _specialCharacterMapEscapeCharacter.forEach((key, value) {
     path = path.replaceAll(key, value);
   });
@@ -73,17 +76,10 @@ String convertPathToEmailPath(String path) {
   return path;
 }
 
-String convertPathToEmailStoragePath({required String path, required EmailAccount emailAccount}) {
-  path = path == '/' ? '' : path;
-  path = join(emailAccount.storageName, 'storage', path).toString();
-
-  return path;
-}
-
-String convertEmailPathToPath(String path) {
+String convertEmailPathToPath({required String path, required String prefix}) {
   _escapeCharacterMapSpecialCharacter.forEach((key, value) {
     path = path.replaceAll(key, value);
   });
-
+  path = path.substring(prefix.length);
   return path;
 }
