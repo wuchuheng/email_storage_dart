@@ -25,13 +25,35 @@ Future<void> cleanEmailBox({required EmailAccount emailAccount}) async {
   );
   await imapClient.login(userName, password);
   // Delete all box on imap server.
+  bool isDelete = false;
+  List<Mailbox> allBoxes = await imapClient.listMailboxes();
   for (String path in <String>[...rootPathList]) {
     path = convertPathToEmailPath(path: path, prefix: emailAccount.storageName);
-    List<Mailbox> boxes = await imapClient.listMailboxes(path: path);
+    List<Mailbox> boxes = allBoxes.where((element) {
+      if (element.path.length < path.length) return false;
+      return element.path.substring(0, path.length) == path;
+    }).toList();
     for (Mailbox box in boxes) {
+      // To deleted all mail files
+      await imapClient.selectMailboxByPath(box.path);
+      final MessageSequence ms = MessageSequence.fromRangeToLast(1);
+      final FetchImapResult imapData = await imapClient.uidFetchMessages(ms, 'BODY.PEEK[HEADER.FIELDS (subject)]');
+      for (MimeMessage mm in imapData.messages) {
+        final int uid = mm.uid!;
+        final sequence = MessageSequence.fromId(uid, isUid: true);
+        await imapClient.uidStore(sequence, ["\\Deleted"]);
+        await imapClient.uidExpunge(sequence);
+      }
       await imapClient.deleteMailbox(box);
+      isDelete = true;
     }
   }
+  if (isDelete) {
+    await Future.delayed(Duration(seconds: 3));
+  }
+  await imapClient.closeMailbox();
+  await imapClient.logout();
+  imapClient.disconnect();
 
   Logger.info('After clean email box.', symbol: 'Testing');
 }

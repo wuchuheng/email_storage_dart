@@ -26,5 +26,9 @@ Future<void> connect({required EmailAccount emailAccount, required ChannelAbstra
   database = AppDb(dbSavedPath: localCachePath);
   // Check the root path or creating in the database.
   await Path.checkPathListOrCreate(database: database, pathList: pathList);
+  // Listening to the operation log and get the the next Uid changed event
+  imapModule.listeningToOperationLog();
+  // TODO: delete code for testing.
+  await Future.delayed(Duration(seconds: 600));
   channel.send('');
 }

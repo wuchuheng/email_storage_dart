@@ -3,8 +3,11 @@ import 'package:wuchuheng_email_storage/modules/connect_module/database_module/d
 
 class Path extends Table {
   IntColumn get id => integer().nullable().autoIncrement()();
+  // The name of path.
   TextColumn get name => text().unique().withLength(min: 1)();
   IntColumn get pid => integer().nullable().withDefault(const Constant(0))();
+  // The uid is last updated from online.
+  IntColumn get lastSyncUid => integer().nullable().withDefault(const Constant(0))();
 
   // Check the list of path or create that.
   static Future<void> checkPathListOrCreate({

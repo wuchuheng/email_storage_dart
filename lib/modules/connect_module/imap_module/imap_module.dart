@@ -11,12 +11,6 @@ part 'imap_module_middleware.dart';
 
 late Task<ImapChannelName> task;
 
-enum ImapChannelName {
-  connect,
-  setIsLogEnabled,
-  getPathListOrInitByPrefixList, // 获取IMAP上保存存储路径列表
-}
-
 // Connect to imap server with email account.
 Future<void> connect({required EmailAccount emailAccount, required bool isLogEnabled}) async {
   task = await _createMiddleware();
@@ -45,4 +39,8 @@ Future<List<String>> getPathListOrInitByPrefixList({required List<String> initPa
     ..send(initPathList);
 
   return completer.future;
+}
+
+void listeningToOperationLog() {
+  task.createChannel(name: ImapChannelName.listeningToOperationLog).send('');
 }

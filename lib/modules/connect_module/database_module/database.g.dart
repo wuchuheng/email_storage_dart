@@ -462,8 +462,16 @@ class $PathTable extends Path with TableInfo<$PathTable, PathData> {
       type: DriftSqlType.int,
       requiredDuringInsert: false,
       defaultValue: const Constant(0));
+  static const VerificationMeta _lastSyncUidMeta =
+      const VerificationMeta('lastSyncUid');
   @override
-  List<GeneratedColumn> get $columns => [id, name, pid];
+  late final GeneratedColumn<int> lastSyncUid = GeneratedColumn<int>(
+      'last_sync_uid', aliasedName, true,
+      type: DriftSqlType.int,
+      requiredDuringInsert: false,
+      defaultValue: const Constant(0));
+  @override
+  List<GeneratedColumn> get $columns => [id, name, pid, lastSyncUid];
   @override
   String get aliasedName => _alias ?? 'path';
   @override
@@ -486,6 +494,12 @@ class $PathTable extends Path with TableInfo<$PathTable, PathData> {
       context.handle(
           _pidMeta, pid.isAcceptableOrUnknown(data['pid']!, _pidMeta));
     }
+    if (data.containsKey('last_sync_uid')) {
+      context.handle(
+          _lastSyncUidMeta,
+          lastSyncUid.isAcceptableOrUnknown(
+              data['last_sync_uid']!, _lastSyncUidMeta));
+    }
     return context;
   }
 
@@ -501,6 +515,8 @@ class $PathTable extends Path with TableInfo<$PathTable, PathData> {
           .read(DriftSqlType.string, data['${effectivePrefix}name'])!,
       pid: attachedDatabase.typeMapping
           .read(DriftSqlType.int, data['${effectivePrefix}pid']),
+      lastSyncUid: attachedDatabase.typeMapping
+          .read(DriftSqlType.int, data['${effectivePrefix}last_sync_uid']),
     );
   }
 
@@ -514,7 +530,8 @@ class PathData extends DataClass implements Insertable<PathData> {
   final int? id;
   final String name;
   final int? pid;
-  const PathData({this.id, required this.name, this.pid});
+  final int? lastSyncUid;
+  const PathData({this.id, required this.name, this.pid, this.lastSyncUid});
   @override
   Map<String, Expression> toColumns(bool nullToAbsent) {
     final map = <String, Expression>{};
@@ -525,6 +542,9 @@ class PathData extends DataClass implements Insertable<PathData> {
     if (!nullToAbsent || pid != null) {
       map['pid'] = Variable<int>(pid);
     }
+    if (!nullToAbsent || lastSyncUid != null) {
+      map['last_sync_uid'] = Variable<int>(lastSyncUid);
+    }
     return map;
   }
 
@@ -533,6 +553,9 @@ class PathData extends DataClass implements Insertable<PathData> {
       id: id == null && nullToAbsent ? const Value.absent() : Value(id),
       name: Value(name),
       pid: pid == null && nullToAbsent ? const Value.absent() : Value(pid),
+      lastSyncUid: lastSyncUid == null && nullToAbsent
+          ? const Value.absent()
+          : Value(lastSyncUid),
     );
   }
 
@@ -543,6 +566,7 @@ class PathData extends DataClass implements Insertable<PathData> {
       id: serializer.fromJson<int?>(json['id']),
       name: serializer.fromJson<String>(json['name']),
       pid: serializer.fromJson<int?>(json['pid']),
+      lastSyncUid: serializer.fromJson<int?>(json['lastSyncUid']),
     );
   }
   @override
@@ -552,71 +576,85 @@ class PathData extends DataClass implements Insertable<PathData> {
       'id': serializer.toJson<int?>(id),
       'name': serializer.toJson<String>(name),
       'pid': serializer.toJson<int?>(pid),
+      'lastSyncUid': serializer.toJson<int?>(lastSyncUid),
     };
   }
 
   PathData copyWith(
           {Value<int?> id = const Value.absent(),
           String? name,
-          Value<int?> pid = const Value.absent()}) =>
+          Value<int?> pid = const Value.absent(),
+          Value<int?> lastSyncUid = const Value.absent()}) =>
       PathData(
         id: id.present ? id.value : this.id,
         name: name ?? this.name,
         pid: pid.present ? pid.value : this.pid,
+        lastSyncUid: lastSyncUid.present ? lastSyncUid.value : this.lastSyncUid,
       );
   @override
   String toString() {
     return (StringBuffer('PathData(')
           ..write('id: $id, ')
           ..write('name: $name, ')
-          ..write('pid: $pid')
+          ..write('pid: $pid, ')
+          ..write('lastSyncUid: $lastSyncUid')
           ..write(')'))
         .toString();
   }
 
   @override
-  int get hashCode => Object.hash(id, name, pid);
+  int get hashCode => Object.hash(id, name, pid, lastSyncUid);
   @override
   bool operator ==(Object other) =>
       identical(this, other) ||
       (other is PathData &&
           other.id == this.id &&
           other.name == this.name &&
-          other.pid == this.pid);
+          other.pid == this.pid &&
+          other.lastSyncUid == this.lastSyncUid);
 }
 
 class PathCompanion extends UpdateCompanion<PathData> {
   final Value<int?> id;
   final Value<String> name;
   final Value<int?> pid;
+  final Value<int?> lastSyncUid;
   const PathCompanion({
     this.id = const Value.absent(),
     this.name = const Value.absent(),
     this.pid = const Value.absent(),
+    this.lastSyncUid = const Value.absent(),
   });
   PathCompanion.insert({
     this.id = const Value.absent(),
     required String name,
     this.pid = const Value.absent(),
+    this.lastSyncUid = const Value.absent(),
   }) : name = Value(name);
   static Insertable<PathData> custom({
     Expression<int>? id,
     Expression<String>? name,
     Expression<int>? pid,
+    Expression<int>? lastSyncUid,
   }) {
     return RawValuesInsertable({
       if (id != null) 'id': id,
       if (name != null) 'name': name,
       if (pid != null) 'pid': pid,
+      if (lastSyncUid != null) 'last_sync_uid': lastSyncUid,
     });
   }
 
   PathCompanion copyWith(
-      {Value<int?>? id, Value<String>? name, Value<int?>? pid}) {
+      {Value<int?>? id,
+      Value<String>? name,
+      Value<int?>? pid,
+      Value<int?>? lastSyncUid}) {
     return PathCompanion(
       id: id ?? this.id,
       name: name ?? this.name,
       pid: pid ?? this.pid,
+      lastSyncUid: lastSyncUid ?? this.lastSyncUid,
     );
   }
 
@@ -632,6 +670,9 @@ class PathCompanion extends UpdateCompanion<PathData> {
     if (pid.present) {
       map['pid'] = Variable<int>(pid.value);
     }
+    if (lastSyncUid.present) {
+      map['last_sync_uid'] = Variable<int>(lastSyncUid.value);
+    }
     return map;
   }
 
@@ -640,7 +681,8 @@ class PathCompanion extends UpdateCompanion<PathData> {
     return (StringBuffer('PathCompanion(')
           ..write('id: $id, ')
           ..write('name: $name, ')
-          ..write('pid: $pid')
+          ..write('pid: $pid, ')
+          ..write('lastSyncUid: $lastSyncUid')
           ..write(')'))
         .toString();
   }
