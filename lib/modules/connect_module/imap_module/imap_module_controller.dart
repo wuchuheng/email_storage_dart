@@ -71,12 +71,12 @@ Future<void> listeningToOperationLog({
 }) async {
   while (true) {
     final String path = convertPathToEmailPath(path: rootOperationLogPath, prefix: emailAccount.storageName);
-    try {
-      final box = await imapClient.selectMailboxByPath(path);
-      Logger.info(box.messagesExists.toString());
-      await Future.delayed(Duration(seconds: 1));
-    } catch (e, track) {
-      print(e);
-    }
+    // try {
+    //   final box = await imapClient.selectMailboxByPath(path);
+    //   Logger.info(box.messagesExists.toString());
+    //   await Future.delayed(Duration(seconds: 1));
+    // } catch (e, track) {
+    //   print(e);
+    // }
   }
 }
