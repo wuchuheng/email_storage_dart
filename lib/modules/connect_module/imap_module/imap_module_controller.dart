@@ -3,7 +3,6 @@ import 'package:wuchuheng_email_storage/config/config.dart';
 import 'package:wuchuheng_email_storage/dto/email_account/email_account.dart';
 import 'package:wuchuheng_email_storage/utils/convert_path_util.dart';
 import 'package:wuchuheng_isolate_channel/src/service/channel/channel_abstract.dart';
-import 'package:wuchuheng_logger/wuchuheng_logger.dart';
 
 bool isLogEnabled = true;
 
