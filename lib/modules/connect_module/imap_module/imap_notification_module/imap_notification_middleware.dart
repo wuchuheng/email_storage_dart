@@ -4,7 +4,10 @@ import 'dart:typed_data';
 
 import 'package:wuchuheng_email_storage/config/config.dart';
 import 'package:wuchuheng_email_storage/dto/email_account/email_account.dart';
+import 'package:wuchuheng_email_storage/dto/imap_conversation/imap_conversation.dart';
 import 'package:wuchuheng_isolate_channel/wuchuheng_isolate_channel.dart';
+
+import 'imap_notification_service.dart';
 
 part 'imap_notification_controller.dart';
 

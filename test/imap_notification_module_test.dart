@@ -15,5 +15,5 @@ void main() {
     print(DateTime.now());
     await onNotification(emailAccount: emailAccount);
     await Future.delayed(Duration(seconds: 2000));
-  });
+  }, timeout: Timeout(Duration(seconds: 2000)));
 }

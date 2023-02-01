@@ -12,6 +12,7 @@ class EmailAccount {
   final bool smtpTls;
   final String storageName;
   final String localStoragePath;
+  final int timeout; // timeout seconds
 
   EmailAccount({
     required this.imapHost,
@@ -20,6 +21,7 @@ class EmailAccount {
     required this.userName,
     required this.storageName,
     required this.localStoragePath,
+    this.timeout = 60,
     this.smtpPort = 465,
     this.imapPort = 993,
     this.imapTls = true,

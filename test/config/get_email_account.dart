@@ -13,5 +13,6 @@ EmailAccount getEmailAccount() {
     userName: DotEnv.get('USERNAME', ''),
     storageName: DotEnv.get('STORAGE_NAME', ''),
     localStoragePath: DotEnv.get('LOCAL_STORAGE_PATH', ''),
+    timeout: 1000,
   );
 }

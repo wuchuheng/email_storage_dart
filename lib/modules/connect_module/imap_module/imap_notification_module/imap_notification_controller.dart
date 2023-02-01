@@ -1,42 +1,49 @@
 part of 'imap_notification_middleware.dart';
 
+Map<int, String> conversationToIdle = {
+  // server say:  * OK [CAPABILITY IMAP4 IMAP4rev1 ID AUTH=PLAIN AUTH=LOGIN AUTH=XOAUTH2 NAMESPACE] QQMail XMIMAP4Server ready
+  0: '1.3 ID ("name" "Mac OS X Mail" "version" "16.0 (3696.80.82.1.1)" "os" "Mac OS X" "os-version" "12.3 (21E230)" "vendor" "Apple Inc.")',
+  // server sya: * ID NIL
+  // 1: '',
+  // server say: 1.3 OK ID completed
+  1: '2.3 AUTHENTICATE PLAIN',
+  // server say: +
+  2: "MjM5OTQxMjc2NkBxcS5jb20AMjM5OTQxMjc2NkBxcS5jb20AZ3lpbmFxc2lneHp0ZWNkZQa==",
+  // server say: 2.3 OK Success login ok
+  3: "3.3 CAPABILITY",
+  // server say: * CAPABILITY IMAP4 IMAP4rev1 XLIST MOVE IDLE XAPPLEPUSHSERVICE NAMESPACE CHILDREN ID UIDPLUS
+  // 4: '',
+  // server say: 3.3 OK CAPABILITY Completed
+  4: '4.3 SELECT INBOX',
+  5: '13.1 IDLE',
+};
+
+int sessionVersionInt = 0;
+bool isFirstMessage = true;
+bool isIdling = false;
 Future<void> _onNotification({required EmailAccount emailAccount}) async {
-  var socket = await Socket.connect("baidu.com", 80);
-  socket.listen((event) {
-    print(event);
+  final Socket socket = await SecureSocket.connect(emailAccount.imapHost, emailAccount.imapPort);
+  socket.timeout(Duration(seconds: emailAccount.timeout));
+  socket.listen((Uint8List buff) {
+    final String result = String.fromCharCodes(buff);
+    if (result.substring(0, 1) != '*' || isFirstMessage) {
+      isFirstMessage = false;
+      if (conversationToIdle.containsKey(sessionVersionInt)) {
+        if (conversationToIdle[sessionVersionInt]!.isNotEmpty) {
+          socket.write('${conversationToIdle[sessionVersionInt]}\r\n');
+          socket.flush();
+        }
+      }
+      sessionVersionInt++;
+      return;
+    }
+    if (isIdling) {
+      print(result);
+    }
+    if (sessionVersionInt > conversationToIdle.length) {
+      isIdling = true;
+    }
   });
-  //根据http协议，发起 Get请求头
-  socket.writeln("GET / HTTP/1.1");
-  socket.writeln("Host:baidu.com");
-  socket.writeln("Connection:close");
-  socket.writeln();
-  await socket.flush(); //发送
-  //读取返回内容，按照utf8解码为字符串
 
-  // String _response = await utf8.decoder.bind(socket).join();
-  await socket.close();
-
-  //
-  // final connectHandler = await SecureSocket.connect(
-  //   emailAccount.imapHost,
-  //   emailAccount.imapPort,
-  //   onBadCertificate: (X509Certificate certificate) {
-  //     print(certificate);
-  //     return true;
-  //   },
-  // ).timeout(Duration(seconds: connectTimeout));
-  // connectHandler.listen(
-  //   (Uint8List data) async {
-  //     print(data);
-  //     final serverGreeting = String.fromCharCodes(data);
-  //     print(data);
-  //   },
-  //   onError: () {
-  //     print('error');
-  //   },
-  //   onDone: () {
-  //     print('done');
-  //   },
-  // );
-  await Future.delayed(Duration(seconds: 60));
+  await Future.delayed(Duration(seconds: emailAccount.timeout));
 }
