@@ -15,6 +15,7 @@ Future<Task<ImapNotificationChannelName>> createMiddlewareTask() async {
       case ImapNotificationChannelName.onNotification:
         assert(message is EmailAccount);
         await _onNotification(emailAccount: message);
+        channel.send('');
         break;
     }
   });

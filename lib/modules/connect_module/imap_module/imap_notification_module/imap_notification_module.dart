@@ -1,5 +1,7 @@
 // Used to notify the inbox files changed.
-import 'package:wuchuheng_email_storage/dto/email_account/email_account.dart';
+import 'dart:async';
+
+import 'package:wuchuheng_email_storage/modules/connect_module/imap_module/imap_notification_module/dto/on_notification_parameter.dart';
 import 'package:wuchuheng_isolate_channel/wuchuheng_isolate_channel.dart';
 
 import 'imap_notification_middleware.dart';
@@ -12,7 +14,15 @@ Future<Task<ImapNotificationChannelName>> _getTask() async {
   return _task!;
 }
 
-Future<void> onNotification({required EmailAccount emailAccount}) async {
+Future<void> onNotification(OnNotificationParameter value) async {
   final Task<ImapNotificationChannelName> task = await _getTask();
-  task.createChannel(name: ImapNotificationChannelName.onNotification).send(emailAccount);
+  final channel = task.createChannel(name: ImapNotificationChannelName.onNotification);
+  Completer<void> completer = Completer<void>();
+  channel.listen((message, channel) async {
+    completer.complete();
+    channel.close();
+  });
+
+  channel.send(value.emailAccount);
+  completer.future;
 }

@@ -2,6 +2,7 @@ import 'dart:async';
 
 import 'package:test/scaffolding.dart';
 import 'package:wuchuheng_email_storage/dto/email_account/email_account.dart';
+import 'package:wuchuheng_email_storage/modules/connect_module/imap_module/imap_notification_module/dto/on_notification_parameter.dart';
 import 'package:wuchuheng_email_storage/modules/connect_module/imap_module/imap_notification_module/imap_notification_module.dart';
 
 import 'config/get_email_account.dart';
@@ -14,7 +15,7 @@ void main() {
     emailAccount = getEmailAccount();
   });
   test('onNotification', () async {
-    await onNotification(emailAccount: emailAccount);
+    await onNotification(OnNotificationParameter(emailAccount: emailAccount));
     await Future.delayed(Duration(seconds: timeout));
   }, timeout: Timeout(Duration(seconds: timeout)));
 }
