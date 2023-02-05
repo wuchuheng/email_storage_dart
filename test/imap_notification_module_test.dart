@@ -17,7 +17,7 @@ void main() {
     emailAccount = getEmailAccount();
   });
   test('onNotification', () async {
-    await onNotification(
+    final Future<void> Function() cancel = await notification(
       OnNotificationParameter(
         emailAccount: emailAccount,
         onDisconnect: () {
@@ -25,7 +25,7 @@ void main() {
         },
       ),
     );
-
+    await cancel();
     await Future.delayed(Duration(seconds: timeout));
     expect(isDisconnect, true);
   }, timeout: Timeout(Duration(seconds: timeout)));

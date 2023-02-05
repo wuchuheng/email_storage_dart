@@ -10,6 +10,7 @@ Future<Task<TcpPingChannelName>> _getTask() async {
   return _task!;
 }
 
+/// TODO: 这里返回一个回调，用于取消操作。
 Future<void> tcpPing(TcpPingParameter value) async {
   final task = await _getTask();
   final channel = task.createChannel(name: TcpPingChannelName.connect);
@@ -26,5 +27,18 @@ Future<void> tcpPing(TcpPingParameter value) async {
   });
   disconnectChannel.send('');
 
+  return completer.future;
+}
+
+/// TODO: 这里对外暴露的是回调而不是再声明一个，这里要删除
+Future<void> cancel() async {
+  final task = await _getTask();
+  final cancelChannel = task.createChannel(name: TcpPingChannelName.cancel);
+  Completer<void> completer = Completer();
+  cancelChannel.listen((message, channel) async {
+    completer.complete();
+    channel.close();
+  });
+  cancelChannel.send('');
   return completer.future;
 }

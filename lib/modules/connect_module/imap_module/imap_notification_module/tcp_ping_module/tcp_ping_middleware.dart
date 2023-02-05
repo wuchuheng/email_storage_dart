@@ -10,6 +10,7 @@ part 'tcp_ping_controller.dart';
 enum TcpPingChannelName {
   connect,
   onDisconnect,
+  cancel,
 }
 
 Future<Task<TcpPingChannelName>> createTcpPingMiddlewareTask() async {
@@ -23,6 +24,10 @@ Future<Task<TcpPingChannelName>> createTcpPingMiddlewareTask() async {
       case TcpPingChannelName.onDisconnect:
         assert(message is String);
         _onDisconnect(() => channel.send(''));
+        break;
+      case TcpPingChannelName.cancel:
+        await _cancel();
+        channel.send('');
         break;
     }
   });

@@ -14,9 +14,9 @@ Future<Task<ImapNotificationChannelName>> _getTask() async {
   return _task!;
 }
 
-Future<void> onNotification(OnNotificationParameter value) async {
+Future<Future<void> Function()> notification(OnNotificationParameter value) async {
   final Task<ImapNotificationChannelName> task = await _getTask();
-  final channel = task.createChannel(name: ImapNotificationChannelName.onNotification);
+  final channel = task.createChannel(name: ImapNotificationChannelName.notification);
   Completer<void> completer = Completer<void>();
   channel.listen((message, channel) async {
     completer.complete();
@@ -30,6 +30,15 @@ Future<void> onNotification(OnNotificationParameter value) async {
     channel.close();
   });
   disconnectChannel.send(''); // launch disconnect channel
-
-  return completer.future;
+  await completer.future;
+  // declare cancel callback here.
+  return () {
+    final cancelChannel = task.createChannel(name: ImapNotificationChannelName.cancel);
+    Completer<void> completer = Completer();
+    cancelChannel.listen((message, channel) async {
+      completer.complete();
+      cancelChannel.close();
+    });
+    return completer.future;
+  };
 }

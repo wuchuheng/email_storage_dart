@@ -1,11 +1,13 @@
 part of 'tcp_ping_middleware.dart';
 
-List<void Function()> _onDisconnectEventRegister = [];
+late Socket socket;
+List<void Function()> _socketDoneEventRegister = [];
 
+List<void Function()> _onDisconnectEventRegister = [];
 Future<void> _tcpPing(TcpPingParameter value) async {
   final host = value.emailAccount.imapHost;
   final port = value.emailAccount.imapPort;
-  final Socket socket = await SecureSocket.connect(
+  socket = await SecureSocket.connect(
     host,
     port,
     timeout: Duration(
@@ -30,7 +32,20 @@ Future<void> _tcpPing(TcpPingParameter value) async {
       callback();
     }
     _onDisconnectEventRegister.clear();
+    for (var callback in _socketDoneEventRegister) {
+      callback();
+    }
+    _socketDoneEventRegister.clear();
   });
 }
 
 _onDisconnect(void Function() callback) => _onDisconnectEventRegister.add(callback);
+
+Future<void> _cancel() {
+  Completer<void> completer = Completer();
+  _socketDoneEventRegister.add(() {
+    completer.complete();
+  });
+  socket.close();
+  return completer.future;
+}

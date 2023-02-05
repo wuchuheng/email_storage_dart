@@ -1,8 +1,9 @@
 part of 'imap_notification_middleware.dart';
 
 List<void Function()> _onDisconnectResister = [];
+List<void Function()> _cancelRegister = [];
 
-Future<void> _onNotification({required EmailAccount emailAccount}) async {
+Future<void> _notification({required EmailAccount emailAccount}) async {
   await tcpPing(
     TcpPingParameter(
       emailAccount: emailAccount,
@@ -17,3 +18,9 @@ Future<void> _onNotification({required EmailAccount emailAccount}) async {
 }
 
 void _onDisconnect(void Function() callback) => _onDisconnectResister.add(callback);
+
+Future<void> _cancel() async {
+  Completer<void> completer = Completer();
+  _cancelRegister.add(() => completer.complete());
+  return completer.future;
+}
