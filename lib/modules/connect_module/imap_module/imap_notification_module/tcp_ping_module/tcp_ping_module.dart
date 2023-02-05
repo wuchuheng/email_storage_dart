@@ -15,8 +15,16 @@ Future<void> tcpPing(TcpPingParameter value) async {
   final channel = task.createChannel(name: TcpPingChannelName.connect);
   Completer<void> completer = Completer<void>();
   channel.listen((message, channel) async {
+    channel.close();
     completer.complete();
   });
   channel.send(value);
+  final disconnectChannel = task.createChannel(name: TcpPingChannelName.onDisconnect);
+  disconnectChannel.listen((message, channel) async {
+    value.onDisconnect();
+    channel.close();
+  });
+  disconnectChannel.send('');
+
   return completer.future;
 }

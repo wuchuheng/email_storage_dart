@@ -1,5 +1,7 @@
 part of 'tcp_ping_middleware.dart';
 
+List<void Function()> _onDisconnectEventRegister = [];
+
 Future<void> _tcpPing(TcpPingParameter value) async {
   final host = value.emailAccount.imapHost;
   final port = value.emailAccount.imapPort;
@@ -22,8 +24,13 @@ Future<void> _tcpPing(TcpPingParameter value) async {
       },
     );
   }, onDone: () {
-    print('Disconnect');
     timer?.cancel();
     socket.close();
+    for (final callback in _onDisconnectEventRegister) {
+      callback();
+    }
+    _onDisconnectEventRegister.clear();
   });
 }
+
+_onDisconnect(void Function() callback) => _onDisconnectEventRegister.add(callback);

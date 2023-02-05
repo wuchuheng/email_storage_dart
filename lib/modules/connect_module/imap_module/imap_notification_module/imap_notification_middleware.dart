@@ -7,6 +7,7 @@ part 'imap_notification_controller.dart';
 
 enum ImapNotificationChannelName {
   onNotification,
+  onDisconnect,
 }
 
 Future<Task<ImapNotificationChannelName>> createMiddlewareTask() async {
@@ -16,6 +17,11 @@ Future<Task<ImapNotificationChannelName>> createMiddlewareTask() async {
         assert(message is EmailAccount);
         await _onNotification(emailAccount: message);
         channel.send('');
+        break;
+      case ImapNotificationChannelName.onDisconnect:
+        _onDisconnect(() {
+          channel.send('');
+        });
         break;
     }
   });

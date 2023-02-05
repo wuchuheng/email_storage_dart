@@ -22,7 +22,14 @@ Future<void> onNotification(OnNotificationParameter value) async {
     completer.complete();
     channel.close();
   });
-
   channel.send(value.emailAccount);
-  completer.future;
+  // Listen to disconnect event;
+  final disconnectChannel = task.createChannel(name: ImapNotificationChannelName.onDisconnect);
+  disconnectChannel.listen((message, channel) async {
+    value.onDisconnect();
+    channel.close();
+  });
+  disconnectChannel.send(''); // launch disconnect channel
+
+  return completer.future;
 }
