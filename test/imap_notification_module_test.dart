@@ -6,14 +6,15 @@ import 'package:wuchuheng_email_storage/modules/connect_module/imap_module/imap_
 
 import 'config/get_email_account.dart';
 
+final timeout = 60 * 5;
+
 void main() {
   late EmailAccount emailAccount;
   setUp(() {
     emailAccount = getEmailAccount();
   });
   test('onNotification', () async {
-    print(DateTime.now());
     await onNotification(emailAccount: emailAccount);
-    await Future.delayed(Duration(seconds: 2000));
-  }, timeout: Timeout(Duration(seconds: 2000)));
+    await Future.delayed(Duration(seconds: timeout));
+  }, timeout: Timeout(Duration(seconds: timeout)));
 }
