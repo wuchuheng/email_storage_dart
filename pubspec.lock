@@ -369,6 +369,14 @@ packages:
       url: "https://pub.dev"
     source: hosted
     version: "1.2.1"
+  wuchuheng_env:
+    dependency: "direct main"
+    description:
+      name: wuchuheng_env
+      sha256: "04833b4375901f17b7af8b09c5d163e0b7feb522db3243e351f3abb4aace279a"
+      url: "https://pub.dev"
+    source: hosted
+    version: "1.0.4"
   yaml:
     dependency: transitive
     description:
