@@ -1,62 +1,39 @@
-<h1 align="center">wuchuheng_email_storage</h1>
-<h3 align='center'>An email-based file storage library</h3>
-<p align="center">
-    <a href="https://github.com/wuchuheng/email_storage_dart/actions/workflows/test.yml" target="_blank">
-        <img 
-            src="https://github.com/wuchuheng/email_storage_dart/actions/workflows/test.yml/badge.svg?branch=dev"
-            alt="Library testing" 
-        />
-    </a>
-    <a href="https://github.com/wuchuheng/email_storage_dart" >
-        <img src="https://badgen.net/badge/license/MIT/green" alt="MIT licence" />
-    </a>
-</p>
+<!-- 
+This README describes the package. If you publish this package to pub.dev,
+this README's contents appear on the landing page for your package.
+
+For information about how to write a good package README, see the guide for
+[writing package pages](https://dart.dev/guides/libraries/writing-package-pages). 
+
+For general information about developing packages, see the Dart guide for
+[creating packages](https://dart.dev/guides/libraries/create-library-packages)
+and the Flutter guide for
+[developing packages and plugins](https://flutter.dev/developing-packages). 
+-->
+
+TODO: Put a short description of the package here that helps potential users
+know whether this package might be useful for them.
+
+## Features
+
+TODO: List what your package can do. Maybe include images, gifs, or videos.
 
 ## Getting started
 
-Depend on it
-Run this command:
-
-With Dart:
-
-``` bash 
-$ dart pub add wuchuheng_email_storage
-```
-With Flutter:
-
-``` bash 
-$ flutter pub add wuchuheng_email_storage
-```
-
-This will add a line like this to your package's pubspec.yaml (and run an implicit dart pub get):
-
-``` yaml 
-dependencies:
-  wuchuheng_email_storage: ^0.0.1
-```
-
-Alternatively, your editor might support dart pub get or flutter pub get. Check the docs for your editor to learn more.
-
-Import it
-Now in your Dart code, you can use:
-
-import ` 'package:wuchuheng_email_storage/wuchuheng_email_storage.dart'`;
+TODO: List prerequisites and provide or point to information on how to
+start using the package.
 
 ## Usage
 
+TODO: Include short and useful examples for package users. Add longer examples
+to `/example` folder. 
+
 ```dart
-import 'package:wuchuheng_email_storage/wuchuheng_email_storage.dart';
+const like = 'sample';
 ```
 
-## Contributing
+## Additional information
 
-You can contribute in one of three ways:
-
-1. File bug reports using the [issue tracker](https://github.com/wuchuheng/email_storage_dart/issues).
-2. Answer questions or fix bugs on the [issue tracker](https://github.com/wuchuheng/email_storage_dart/issues).
-3. Contribute new features or update the wiki.
-
-## License
-
-MIT
-
+TODO: Tell users more about the package: where to find more information, how to 
+contribute to the package, how to file issues, what response they can expect 
+from the package authors, and more.

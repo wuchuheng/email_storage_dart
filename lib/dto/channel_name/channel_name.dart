@@ -1,1 +1,0 @@
-enum ConnectChannelName { connect, setIsLogEnabled }
