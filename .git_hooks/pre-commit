@@ -1,0 +1,28 @@
+#!/bin/sh
+#
+# This script is used to run the Dart analyzer and tests before committing.
+# It is intended to be used as a Git pre-commit hook.
+#
+
+# Check the commands (git grep dart) being used are available.
+cmds=("git" "dart", "grep")
+for cmd in ${cmds[@]}; do
+    if ! command -v $cmd &> /dev/null; then
+        echo "$cmd could not be found, please install it."
+        exit 1
+    fi
+done
+
+# Analyze only Dart files that are about to be committed.
+# Get the list of staged Dart files and analyze them.
+STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E "\.dart$" | tr '\n' ' ')
+dart analyze --fatal-infos --fatal-warnings ${STAGED_FILES}
+if [ $? -ne 0 ]; then
+    echo "Analyzer found issues. Commit aborted."
+    exit 1
+else
+    echo "No analyzer issues found. Commit allowed to proceed."
+fi
+
+# Test the package before committing.
+dart test
