@@ -28,7 +28,7 @@ void _checkArgument({
 }
 
 //
-Future<void> EmailStorage({
+Future<void> emailStorage({
   tls = true,
   required String host,
   required String username,
