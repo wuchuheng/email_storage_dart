@@ -16,14 +16,6 @@ Future<SecureServerSocket> createSecurityTcpServer({required int port}) async {
     ..usePrivateKeyBytes(utf8.encode(key));
   // Create a server
   final server = await SecureServerSocket.bind('0.0.0.0', port, context);
-  // Listen for incoming connections
-  server.listen((SecureSocket socket) {
-    // Handle the connection
-    socket.listen((List<int> data) {
-      // Handle the data
-      print(utf8.decode(data));
-    });
-  });
 
   return server;
 }

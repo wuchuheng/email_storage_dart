@@ -15,9 +15,9 @@ void main() {
   });
   group('IMAP client test', () {
     test('Test IMAP client connection', () => testImapConnection());
-    test(
-        'Test the connection timeout of IMAP client',
-        // Test the first response of the IMAP client will be not sent,
+    test('Test the connection timeout of IMAP client',
         () => testImapFirstResponseTimeout());
+    test('Test the first response from the IMAP was incorrect',
+        () => testImapFirstResponseIncorrect());
   });
 }

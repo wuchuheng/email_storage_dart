@@ -30,10 +30,11 @@ void testImapConnection() async {
   }
 }
 
-//
+const securityTcpServerPort = 993;
+
 Future<void> testImapFirstResponseTimeout() async {
-  const port = 993;
-  final server = await createSecurityTcpServer(port: port);
+  final server = await createSecurityTcpServer(port: securityTcpServerPort);
+  server.listen((socket) {});
   // Wait for 5 minutes.
   final imapClient = ImapClient(
     host: DotEnv.get('SSL_TCP_SERVER_DOMAIN', ''),
@@ -47,5 +48,23 @@ Future<void> testImapFirstResponseTimeout() async {
     expect(e.toString(), 'The IMAP server did not responded any message.');
   });
   // Close the server.
+  await server.close();
+}
+
+Future<void> testImapFirstResponseIncorrect() async {
+  final server = await createSecurityTcpServer(port: securityTcpServerPort);
+  // Send an incorrect response to the client.
+  server.listen((socket) {
+    socket.write('BAD');
+  });
+  // Wait for 5 minutes.
+  final imapClient = ImapClient(
+    host: DotEnv.get('SSL_TCP_SERVER_DOMAIN', ''),
+    username: 'test',
+    password: 'test',
+  );
+  await imapClient.connect().catchError((e) {
+    expect(e.toString(), 'The server did not respond with an OK code.');
+  });
   await server.close();
 }
