@@ -5,7 +5,8 @@
 #
 
 # Check the commands (git grep dart) being used are available.
-cmds=("git" "dart", "grep")
+echo "Checking commands..."
+cmds=("git" "dart" "grep")
 for cmd in ${cmds[@]}; do
     if ! command -v $cmd &> /dev/null; then
         echo "$cmd could not be found, please install it."
@@ -15,6 +16,7 @@ done
 
 # Analyze only Dart files that are about to be committed.
 # Get the list of staged Dart files and analyze them.
+echo "Running analyzer..."
 STAGED_FILES=$(git diff --cached --name-only --diff-filter=ACM | grep -E "\.dart$" | tr '\n' ' ')
 dart analyze --fatal-infos --fatal-warnings ${STAGED_FILES}
 if [ $? -ne 0 ]; then
@@ -25,4 +27,5 @@ else
 fi
 
 # Test the package before committing.
+echo "Running tests..."
 dart test

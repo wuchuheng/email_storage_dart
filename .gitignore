@@ -8,3 +8,4 @@ pubspec.lock
 
 .idea/
 .env
+test_certs/
