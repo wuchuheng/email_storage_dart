@@ -7,16 +7,21 @@ class ImapClient implements ImapClientAbstract {
   final String host;
   final String username;
   final String password;
+  final Duration timeout;
   // define the private state of the tcp connection to the server
   late Socket _socket;
   // define the private state of the connection status
   bool _isConnected = false;
 
   ImapClient(
-      {required this.host, required this.username, required this.password}) {
+      {required this.host,
+      required this.username,
+      required this.password,
+      this.timeout = const Duration(seconds: 5)}) {
     assert(host.isNotEmpty, 'The host cannot be empty.');
     assert(username.isNotEmpty, 'The username cannot be empty.');
     assert(password.isNotEmpty, 'The password cannot be empty.');
+    assert(timeout.inSeconds > 0, 'The timeout must be greater than 0.');
   }
 
   @override
@@ -30,8 +35,7 @@ class ImapClient implements ImapClientAbstract {
     // Assert the connection state of the socket.
     assert(!_isConnected, 'The socket is already connected.');
     // Create a TCP client over TLS that connects to the server
-    _socket =
-        await SecureSocket.connect(host, 993, timeout: Duration(seconds: 5));
+    _socket = await SecureSocket.connect(host, 993, timeout: timeout);
     _isConnected = true;
 
     // Create a completer to return the result of the connection.
@@ -40,7 +44,7 @@ class ImapClient implements ImapClientAbstract {
     final Completer<void> waitFirstResponse = Completer();
 
     // Set a timer to wait to check the first response was received.
-    final waitFirstResponseTask = Timer(Duration(seconds: 5), () {
+    final waitFirstResponseTask = Timer(timeout, () {
       if (!isFirstResponse) {
         waitFirstResponse.complete();
         result.completeError('The IMAP server did not responded any message.');

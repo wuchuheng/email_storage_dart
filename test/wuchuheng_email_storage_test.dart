@@ -4,8 +4,8 @@ import 'dart:io';
 import 'package:test/test.dart';
 import 'package:wuchuheng_env/wuchuheng_env.dart';
 
-import 'env.dart';
-import 'imap.dart';
+import 'integration_test/env.dart';
+import 'integration_test/imap.dart';
 
 void main() {
   // Import the .env file
@@ -15,5 +15,9 @@ void main() {
   });
   group('IMAP client test', () {
     test('Test IMAP client connection', () => testImapConnection());
+    test(
+        'Test the connection timeout of IMAP client',
+        // Test the first response of the IMAP client will be not sent,
+        () => testImapFirstResponseTimeout());
   });
 }
