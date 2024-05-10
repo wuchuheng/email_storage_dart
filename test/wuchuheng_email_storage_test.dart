@@ -20,4 +20,7 @@ void main() {
     test('Test the first response from the IMAP was incorrect',
         () => testImapFirstResponseIncorrect());
   });
+  group('IMAP capability test', () {
+    test('Test the capability of the IMAP server', () => testImapCapability());
+  });
 }
