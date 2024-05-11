@@ -7,7 +7,10 @@ import './imap_capability_checker_abstract.dart';
 
 /// Declare the commands in IMAP
 enum IMAPCommands {
-  capability,
+  CAPABILITY, // ignore: constant_identifier_names
+  LIST, // ignore: constant_identifier_names
+  LOGIN, // ignore: constant_identifier_names
+  DELETE // ignore: constant_identifier_names
 }
 
 class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
@@ -70,7 +73,7 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
     final isIncorrectTag = !_pendingResponses.containsKey(tag) && tag != '*';
     if (isIncorrectTag) {
       log('The server did not respond a correct format message: $response',
-          level: LogLevel.error);
+          level: LogLevel.ERROR);
       return;
     }
 
@@ -80,7 +83,7 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
       // Remove the '* ' within the response.
       response = response.substring(2);
       _multiLineResponseFlash +=
-          _multiLineResponseFlash.isNotEmpty ? eof + response : response;
+          _multiLineResponseFlash.isNotEmpty ? EOF + response : response;
       return;
     }
 
@@ -88,7 +91,7 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
     // Check the tag was in the pending response.
     if (!_pendingResponses.containsKey(tag)) {
       log('The server did not respond a correct format message: $response',
-          level: LogLevel.error);
+          level: LogLevel.ERROR);
       return;
     }
 
@@ -98,7 +101,7 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
     final successStatus = 'OK';
     if (response.startsWith(successStatus)) {
       response = response.substring(('$successStatus ').length);
-      _multiLineResponseFlash += eof + response;
+      _multiLineResponseFlash += EOF + response;
       _pendingResponses[tag]?.complete(_multiLineResponseFlash);
       // Clear the pending response.
       _pendingResponses.remove(tag);
@@ -109,15 +112,15 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
     }
   }
 
-  static const eof = '\r\n';
+  static const EOF = '\r\n'; // ignore: constant_identifier_names
 
   /// Callback function when the TCP connection receives data.
   void _onTcpData(List<int> data) {
     final response = String.fromCharCodes(data);
     // Print a log message with the response.
-    log("<- $response", level: LogLevel.debug);
+    log(response, level: LogLevel.TCP_COMING);
     if (_isReceivedFirstResponse) {
-      for (final line in response.split(eof)) {
+      for (final line in response.split(EOF)) {
         if (line == '') continue;
         _responseHandler(line);
       }
@@ -156,8 +159,8 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
     if (_socket == null) {
       return Future.error(Exception('The socket is not connected.'));
     }
-    final response = await _sendCommand(command: IMAPCommands.capability);
-    final capabilities = response.split(eof).first;
+    final response = await _sendCommand('', command: IMAPCommands.CAPABILITY);
+    final capabilities = response.split(EOF).first;
     for (var capability in _requiredCapabilities) {
       if (!capabilities.contains(capability)) {
         throw Exception(
@@ -178,23 +181,88 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
 
   /// Build a sending message in IMAP format.and then send it to the server.
   /// Waiting for the response for this message.
-  Future<String> _sendCommand({
-    required IMAPCommands command,
-  }) async {
-    // Create a tag for the command.
-    int tagCount = _commandUsageCount[command] ?? 0;
-    tagCount++;
-    _commandUsageCount[command] = tagCount;
-    final newTag = command.toString().split('.').last[0] + tagCount.toString();
-
+  Future<String> _sendCommand(String msg,
+      {required IMAPCommands command}) async {
+    // Generate a new tag for the command.
+    final newTag = _generateCommandTag(command);
+    msg = msg.isEmpty ? '' : ' $msg';
     // Compose the command message.
-    final commandMessage = '$newTag ${command.toString().split('.').last}\r\n';
+    final newMsg = '$newTag ${command.toString().split('.').last}$msg$EOF';
+
     // Create a Completer to wait for the response.
     final responseCompleter = Completer<String>();
     _pendingResponses[newTag] = responseCompleter;
-    log('-> $commandMessage', level: LogLevel.debug);
-    _socket?.write(commandMessage);
+    log(newMsg, level: LogLevel.TCP_GOING);
+    _socket?.write(newMsg);
 
     return responseCompleter.future;
+  }
+
+  String _generateCommandTag(IMAPCommands command) {
+    int tagCount = _commandUsageCount[command] ?? 0;
+    tagCount++;
+    _commandUsageCount[command] = tagCount;
+    return command.toString().split('.').last[0] + tagCount.toString();
+  }
+
+  List<String> _mailboxes = <String>[];
+
+  @override
+  Future<void> checkListCommand() async {
+    String res = await _sendCommand('"" "*"', command: IMAPCommands.LIST);
+    // Remove the last line of the response by the delimiter of EOF.
+    res = res.split(EOF).sublist(0, res.split(EOF).length - 1).join(EOF);
+    // Get the list of the folders, from the response like:
+    // LIST () "/" "Archive"
+    // LIST () "/" "tmp"
+    // LIST (\Trash) "/" "Deleted Messages"
+    // LIST () "/" "Junk"
+    // LIST (\Noinferiors) "/" "INBOX"
+    // LIST () "/" "Drafts"
+    _mailboxes = res
+        .split(EOF)
+        .map((e) {
+          // Capture the folder name from the element by the regex: (?<=")[^"]*(?="$)
+          String folderName =
+              RegExp(r'(?<=")[^"]*(?="$)').firstMatch(e)?.group(0) ?? "";
+          return folderName;
+        })
+        .where((element) => element.isNotEmpty)
+        .toList();
+  }
+
+  @override
+  Future<void> checkAuthentication() async {
+    await _sendCommand('$username $password', command: IMAPCommands.LOGIN);
+  }
+
+  // Define the testing mailboxes named “tmp”, and all folders under the “tmp” folder will be as a testing mailbox.
+  static const _testingMailbox = "tmp";
+
+  @override
+  Future<void> clearTestingMailboxes() async {
+    // 1. Get the testing mailboxes.
+    final testingMailboxes = _mailboxes
+        .where((element) => element.startsWith(_testingMailbox))
+        .toList();
+    // 2 Delete the testing mailboxes.
+    // 2.1 Declaring a Map variable to store data according to the hierarchy of the mailbox path.
+    final levelMapPathList = <int, List<String>>{};
+    // 2.2 Loop through the testing mailboxes and store the data according to the hierarchy of the mailbox path.
+    for (final String box in testingMailboxes) {
+      final level = box.split('/').length;
+      if (levelMapPathList[level] == null) {
+        levelMapPathList[level] = [];
+      }
+      levelMapPathList[level]?.add(box);
+    }
+    // 2.3 Loop through the levelMapPathList and delete the testing mailboxes in the order of the hierarchy of the mailbox path.
+    final levels = levelMapPathList.keys.toList()
+      ..sort((a, b) => b.compareTo(a));
+    for (final level in levels) {
+      for (final box in levelMapPathList[level]!) {
+        await _sendCommand("\"$box\"", command: IMAPCommands.DELETE);
+      }
+    }
   }
 }

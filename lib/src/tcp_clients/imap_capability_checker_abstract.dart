@@ -9,6 +9,15 @@ abstract class Imap4CapabilityCheckerAbstract {
   // Check if the IMAPrev1 capability is valid.
   Future<void> checkCapabilities();
 
+  // Check if the authentication is valid.
+  Future<void> checkAuthentication();
+
   // Check if the creation of the personal folder is valid.
   Future<void> checkCreateFolder();
+
+  // Check if the command: `LIST` is valid.
+  Future<void> checkListCommand();
+
+  // Clear testing mailboxes before checking the command: `SELECT`
+  Future<void> clearTestingMailboxes();
 }
