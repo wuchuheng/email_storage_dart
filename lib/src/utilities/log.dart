@@ -17,6 +17,23 @@ void log(String message, {LogLevel level = LogLevel.INFO}) {
   final now = DateTime.now();
   final formattedDate =
       '${now.year}-${now.month}-${now.day} ${now.hour}:${now.minute}:${now.second}';
-  final logLevel = level.toString().split('.').last.toUpperCase();
+
+  String logLevel = level.toString().split('.').last.toUpperCase();
+
+  switch (level) {
+    case LogLevel.TCP_COMING:
+      logLevel = 'TCP <-';
+      break;
+    case LogLevel.TCP_GOING:
+      logLevel = 'TCP ->';
+      break;
+    default:
+      break;
+  }
+
+  // Make the logLevel in bold font.
+  logLevel = '\x1B[1m$logLevel\x1B[0m';
+
+  // Print the log message in red color.
   print('$formattedDate [$logLevel] $message');
 }

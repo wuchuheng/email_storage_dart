@@ -10,7 +10,8 @@ enum IMAPCommands {
   CAPABILITY, // ignore: constant_identifier_names
   LIST, // ignore: constant_identifier_names
   LOGIN, // ignore: constant_identifier_names
-  DELETE // ignore: constant_identifier_names
+  DELETE, // ignore: constant_identifier_names
+  CREATE, // ignore: constant_identifier_names
 }
 
 class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
@@ -129,12 +130,6 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
       _waitFirstResponseCompleter.complete();
       _isReceivedFirstResponse = true;
     }
-  }
-
-  @override
-  Future<void> checkCreateFolder() {
-    // TODO: implement checkCreateFolder
-    throw UnimplementedError();
   }
 
   Timer? _waitFirstResponseTimer;
@@ -259,10 +254,36 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
     // 2.3 Loop through the levelMapPathList and delete the testing mailboxes in the order of the hierarchy of the mailbox path.
     final levels = levelMapPathList.keys.toList()
       ..sort((a, b) => b.compareTo(a));
+    // 2.3.1 Define a variable to storage the padding futures to wait for the response.
+    final futures = <Future<String>>[];
     for (final level in levels) {
       for (final box in levelMapPathList[level]!) {
-        await _sendCommand("\"$box\"", command: IMAPCommands.DELETE);
+        futures.add(_sendCommand("\"$box\"", command: IMAPCommands.DELETE));
       }
     }
+
+    // 2.4 Wait for all the futures to complete.
+    await Future.wait(futures);
+  }
+
+  // Define a list of personal folders for testing.
+  static const _testingPersonalFolders = [
+    "$_testingMailbox/.history",
+    "$_testingMailbox/.history/actions",
+    "$_testingMailbox/.history/index",
+  ];
+
+  @override
+  Future<void> checkCreatePersonalFolder() async {
+    // 1. Define a list of pending futures to wait for the response.
+    final futures = <Future<String>>[];
+
+    // 2. Loop through the list of personal folders and create them.
+    for (final folder in _testingPersonalFolders) {
+      futures.add(_sendCommand("\"$folder\"", command: IMAPCommands.CREATE));
+    }
+
+    // 3. Wait for all the futures to complete.
+    await Future.wait(futures);
   }
 }

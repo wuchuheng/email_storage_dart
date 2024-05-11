@@ -85,5 +85,6 @@ Future<void> testImapCapability() async {
     await imapCapabilityChecker.checkAuthentication();
     await imapCapabilityChecker.checkListCommand();
     await imapCapabilityChecker.clearTestingMailboxes();
+    await imapCapabilityChecker.checkCreatePersonalFolder();
   }
 }
