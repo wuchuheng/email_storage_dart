@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client_abstract.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/imap_client_abstract.dart';
 
 class ImapClient implements ImapClientAbstract {
   final String host;

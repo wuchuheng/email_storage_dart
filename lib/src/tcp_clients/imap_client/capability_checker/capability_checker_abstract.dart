@@ -20,4 +20,7 @@ abstract class Imap4CapabilityCheckerAbstract {
 
   // Check if a creation of a personal folder is valid.
   Future<void> checkCreatePersonalFolder();
+
+  // Check if the command: `SELECT` is valid.
+  Future<void> checkSelectCommand();
 }

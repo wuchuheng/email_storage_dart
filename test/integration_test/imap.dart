@@ -1,8 +1,8 @@
 import 'dart:async';
 
 import 'package:test/expect.dart';
-import 'package:wuchuheng_email_storage/src/tcp_clients/imap_capability_checker.dart';
-import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/capability_checker/capability_checker.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/imap_client.dart';
 import 'package:wuchuheng_env/wuchuheng_env.dart';
 
 import 'env.dart';
@@ -86,5 +86,6 @@ Future<void> testImapCapability() async {
     await imapCapabilityChecker.checkListCommand();
     await imapCapabilityChecker.clearTestingMailboxes();
     await imapCapabilityChecker.checkCreatePersonalFolder();
+    await imapCapabilityChecker.checkSelectCommand();
   }
 }
