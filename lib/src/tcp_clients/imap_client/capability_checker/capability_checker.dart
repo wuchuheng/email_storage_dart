@@ -6,17 +6,9 @@ import 'package:wuchuheng_email_storage/src/utilities/log.dart';
 
 import '../../../config/config.dart';
 import '../capability_checker/capability_checker_abstract.dart';
+import '../dto/command.dart';
+import '../dto/request.dart';
 import '../dto/response.dart';
-
-/// Declare the commands in IMAP
-enum IMAPCommands {
-  CAPABILITY, // ignore: constant_identifier_names
-  LIST, // ignore: constant_identifier_names
-  LOGIN, // ignore: constant_identifier_names
-  DELETE, // ignore: constant_identifier_names
-  CREATE, // ignore: constant_identifier_names
-  SELECT, // ignore: constant_identifier_names
-}
 
 class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
   String host;
@@ -153,22 +145,16 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
     if (_socket == null) {
       return Future.error(Exception('The socket is not connected.'));
     }
-    final response = await _sendCommand(IMAPCommands.CAPABILITY);
+    final response = await _sendCommand(Request(command: Command.CAPABILITY));
     // Get the capabilities from the response. the response like:
-    // final capabilities = response.split(EOF).first.substring(
-    //     // for (var capability in _requiredCapabilities) {
-    //     //   if (!capabilities.contains(capability)) {
-    //     //     throw Exception(
-    //     //         'The IMAP server does not support capability: $capability');
-    //     //   }
-    //     // }
-    //     );
+    final capabilities = response.data.first;
+    for (var capability in _requiredCapabilities) {
+      if (!capabilities.contains(capability)) {
+        throw Exception(
+            'The IMAP server does not support capability: $capability');
+      }
+    }
   }
-
-  /// Declare the map to store the increment number for each command to create a tag.
-  /// The key is the command and the value is the increment number.
-  /// The increment number is used to create a tag for the command.
-  final Map<IMAPCommands, int> _commandUsageCount = {};
 
   /// Declare a map to store the pending response for each command.
   /// The key is the message tag and the value is the Future to wait for the response.
@@ -177,17 +163,13 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
 
   /// Build a sending message in IMAP format.and then send it to the server.
   /// Waiting for the response for this message.
-  Future<Response> _sendCommand(IMAPCommands command,
-      {String argument = ""}) async {
-    // Generate a new tag for the command.
-    final newTag = _generateCommandTag(command);
-    argument = argument.isEmpty ? '' : ' $argument';
+  Future<Response> _sendCommand(Request request) async {
     // Compose the command message.
-    final newMsg = '$newTag ${command.toString().split('.').last}$argument$EOF';
+    final newMsg = request.toMessage();
 
     // Create a Completer to wait for the response.
     final responseCompleter = Completer<Response>();
-    _pendingResponses[newTag] = responseCompleter;
+    _pendingResponses[request.tag] = responseCompleter;
     log(newMsg, level: LogLevel.TCP_GOING);
     _socket?.write(newMsg);
 
@@ -196,20 +178,12 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
     return result;
   }
 
-  String _generateCommandTag(IMAPCommands command) {
-    int tagCount = _commandUsageCount[command] ?? 0;
-    tagCount++;
-    _commandUsageCount[command] = tagCount;
-    return command.toString().split('.').last[0] + tagCount.toString();
-  }
-
   List<String> _mailboxes = <String>[];
 
   @override
   Future<void> checkListCommand() async {
     Response res = await _sendCommand(
-      IMAPCommands.LIST,
-      argument: '"" "*"',
+      Request(command: Command.LIST, arguments: ['""', '"*"']),
     );
     // Remove the last line of the response by the delimiter of EOF.
     res = ResponseBuilder(res.sublist(0, res.length - 1));
@@ -233,7 +207,9 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
 
   @override
   Future<void> checkAuthentication() async {
-    await _sendCommand(IMAPCommands.LOGIN, argument: '$username $password');
+    await _sendCommand(
+      Request(command: Command.LOGIN, arguments: [username, password]),
+    );
   }
 
   // Define the testing mailboxes named “tmp”, and all folders under the “tmp” folder will be as a testing mailbox.
@@ -264,8 +240,7 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
     for (final level in levels) {
       for (final box in levelMapPathList[level]!) {
         Future<Response> response = _sendCommand(
-          IMAPCommands.DELETE,
-          argument: "\"$box\"",
+          Request(command: Command.DELETE, arguments: ["\"$box\""]),
         );
         futures.add(response);
       }
@@ -290,8 +265,7 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
     // 2. Loop through the list of personal folders and create them.
     for (final folder in _testingPersonalFolders) {
       futures.add(_sendCommand(
-        IMAPCommands.CREATE,
-        argument: "\"$folder\"",
+        Request(command: Command.CREATE, arguments: ['"$folder"']),
       ));
     }
 
@@ -303,7 +277,9 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
   Future<void> checkSelectCommand() async {
     for (String box in _testingPersonalFolders) {
       // 1. Send the command to select the mailbox.
-      final res = await _sendCommand(IMAPCommands.SELECT, argument: "\"$box\"");
+      final res = await _sendCommand(
+        Request(command: Command.SELECT, arguments: ['"$box"']),
+      );
       // 2. Parse the response and hold the result in Mailbox. the response like:
       parseResponseToMailbox(res);
     }
