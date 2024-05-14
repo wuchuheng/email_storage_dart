@@ -7,6 +7,13 @@ abstract interface class Response {
   /// @return The number of lines in the response data.
   int get length;
 
+  /// Add a factory method to create a new instance of the Response.
+  ///
+  /// This method is used to create a new instance of the Response.
+  /// The data parameter is a list of strings that represent the response from the IMAP server.
+  ///
+  static Response create(List<String> data) => ResponseBuilder(data);
+
   /// Remove tags from the response.
   Response removeTags();
 

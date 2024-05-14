@@ -63,7 +63,7 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
   bool _isReceivedFirstResponse = false;
   final Completer<void> _waitFirstResponseCompleter = Completer<void>();
 
-  Response _responseFlash = ResponseBuilder([]);
+  Response _responseFlash = Response.create([]);
 
   void _responseHandler(String response) {
     // Check the tag in the response.
@@ -98,7 +98,7 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
       _pendingResponses[tag]?.complete(_responseFlash);
 
       // Clear the flash.
-      _responseFlash = ResponseBuilder([]);
+      _responseFlash = Response.create([]);
       // Clear the pending response.
       _pendingResponses.remove(tag);
     } else {
@@ -186,7 +186,7 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
       Request(command: Command.LIST, arguments: ['""', '"*"']),
     );
     // Remove the last line of the response by the delimiter of EOF.
-    res = ResponseBuilder(res.sublist(0, res.length - 1));
+    res = Response.create(res.sublist(0, res.length - 1));
     // Get the list of the folders, from the response like:
     // LIST () "/" "Archive"
     // LIST () "/" "tmp"
@@ -252,6 +252,7 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
 
   // Define a list of personal folders for testing.
   static const _testingPersonalFolders = [
+    _testingMailbox,
     "$_testingMailbox/.history",
     "$_testingMailbox/.history/actions",
     "$_testingMailbox/.history/index",
