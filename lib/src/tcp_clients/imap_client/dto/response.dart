@@ -51,6 +51,39 @@ abstract interface class Response {
   List<String> sublist(int start, int? end);
 }
 
+class AppendResponse extends ResponseBuilder {
+  AppendResponse(super.data);
+
+  /// Get uid of the appended message.
+  int get uid {
+    // 1. Get the last line of the response data.
+    // like: +
+    //       A1 OK [APPENDUID 1675554595 1] completed (took 182 ms)
+    final lastLine = data.last;
+
+    // 2. Get the uid from the last line.
+    final uidPattern = RegExp(r'\[APPENDUID \d+ (\d+)\]');
+    final match = uidPattern.firstMatch(lastLine);
+    final String uid = match!.group(1)!;
+
+    return int.parse(uid);
+  }
+
+  /// Get the UIDVALIDITY value.
+  int get uidValidity {
+    // 1. Get the last line of the response data.
+    // like: +
+    //       A1 OK [APPENDUID 1675554595 1] completed (took 182 ms)
+    final lastLine = data.last;
+
+    // 2. Get the uid from the last line.
+    final uidPattern = RegExp(r'\[APPENDUID (\d+) \d+\]');
+    final String match = uidPattern.firstMatch(lastLine)!.group(1)!;
+
+    return int.parse(match);
+  }
+}
+
 /// This type is used to hold the response from an IMAP server.
 /// The IMAP response data is in the format: `TAG message`. like the flowing:
 /// ```

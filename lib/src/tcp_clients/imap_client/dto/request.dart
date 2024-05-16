@@ -9,7 +9,16 @@ class Request {
   List<String> arguments;
   late String tag;
 
-  Request({required this.command, this.arguments = const []}) {
+  // Define a variable to store the input for multiple lines, that will be sent to the server.
+  // when the server sends a continuation request with '+', the client will send the input.
+  // The input will be stored in this variable.
+  String continueInput;
+
+  Request({
+    required this.command,
+    this.arguments = const [],
+    this.continueInput = '',
+  }) {
     //1. Generate a new tag for the request.
     // 1.1 Get the tag prefix from the command.
     final String tagPrefix = command.toString().split('.').last.substring(0, 1);

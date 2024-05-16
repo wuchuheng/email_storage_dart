@@ -4,10 +4,10 @@
 ///
 library;
 
-class ImapResponseException implements Exception {
+class ResponseException implements Exception {
   final String message;
 
-  ImapResponseException(this.message);
+  ResponseException(this.message);
 
   @override
   String toString() {

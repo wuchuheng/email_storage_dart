@@ -18,4 +18,5 @@ enum Command {
   DELETE, // ignore: constant_identifier_names
   CREATE, // ignore: constant_identifier_names
   SELECT, // ignore: constant_identifier_names
+  APPEND, // ignore: constant_identifier_names
 }

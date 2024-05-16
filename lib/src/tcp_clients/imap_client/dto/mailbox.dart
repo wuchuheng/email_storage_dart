@@ -74,7 +74,7 @@ Mailbox parseResponseToMailbox(Response response) {
       String uidValidityStr =
           RegExp(r'\[UIDVALIDITY\s(\d+)\]').firstMatch(line)?.group(1) ?? "";
       if (uidValidityStr.isEmpty) {
-        throw ImapResponseException(
+        throw ResponseException(
             'The UIDVALIDITY is not found in the response.');
       }
       uidValidity = int.parse(uidValidityStr);
@@ -85,8 +85,7 @@ Mailbox parseResponseToMailbox(Response response) {
       String uidNextStr =
           RegExp(r'\[UIDNEXT\s(\d+)\]').firstMatch(line)?.group(1) ?? "";
       if (uidNextStr.isEmpty) {
-        throw ImapResponseException(
-            'The UIDNEXT is not found in the response.');
+        throw ResponseException('The UIDNEXT is not found in the response.');
       }
       uidNext = int.parse(uidNextStr);
       continue;
@@ -124,7 +123,7 @@ Mailbox parseResponseToMailbox(Response response) {
           permission = MailboxPermission.READ_ONLY;
           break;
         default:
-          throw ImapResponseException(
+          throw ResponseException(
               'The permission is not found in the response.');
       }
     }

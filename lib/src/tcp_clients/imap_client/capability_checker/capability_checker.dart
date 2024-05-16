@@ -1,14 +1,23 @@
 import 'dart:async';
 import 'dart:io';
 
+import 'package:wuchuheng_email_storage/src/exceptions/imap_response_exception.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/mailbox.dart';
 import 'package:wuchuheng_email_storage/src/utilities/log.dart';
 
 import '../../../config/config.dart';
 import '../capability_checker/capability_checker_abstract.dart';
+import '../dto/address.dart';
 import '../dto/command.dart';
+import '../dto/mail.dart';
 import '../dto/request.dart';
 import '../dto/response.dart';
+
+class ContinueInputCompleter {
+  final Completer<void> completer;
+  final Request request;
+  ContinueInputCompleter({required this.completer, required this.request});
+}
 
 class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
   String host;
@@ -65,45 +74,88 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
 
   Response _responseFlash = Response.create([]);
 
+  /// Write the data to the socket.
+  void _write(String data) {
+    // 1. Print a log message with the data.
+    data
+        .split(EOF)
+        .where((element) => element.isNotEmpty)
+        .forEach((line) => log(line, level: LogLevel.TCP_GOING));
+
+    // 2. Write the data to the socket.
+    _socket?.write(data);
+  }
+
   void _responseHandler(String response) {
-    // Check the tag in the response.
+    // 1. Check the tag in the response.
     final tag = response.split(' ')[0];
-    final isIncorrectTag = !_pendingResponses.containsKey(tag) && tag != '*';
+    final isIncorrectTag =
+        !_pendingResponses.containsKey(tag) && !["*", "+"].contains(tag);
     if (isIncorrectTag) {
       log('The server did not respond a correct format message: $response',
           level: LogLevel.ERROR);
       return;
     }
 
-    // If the tag is "*", then it means the coming data is a part of the response.
-    // and then we need to storage the response in the flash.
+    // 2. If the tag is "*", then it means the coming data is a part of the response.
+    // and then we need to storage the response in the flash. and then return.
     if (tag == '*') {
       _responseFlash.add(response);
       return;
     }
 
-    // Check the response line is a part of the multi-line response or not.
-    if (!_pendingResponses.containsKey(tag)) {
-      log('The server did not respond a correct format message: $response',
-          level: LogLevel.ERROR);
+    // 3. If the tag is "+", then it means the coming data is a part of the continuous input command.
+    // The flowing steps must be done for the continuous input command.
+    if (tag == '+') {
+      // 3.1 Storage the response in the flash.
+      _responseFlash.add(response);
+      // 3.2 Continue input the data to the server.
+      // 3.2.1 If the current continuous input completer is null, then throw an exception.
+      if (_currentContinueCommand == null) {
+        throw ResponseException(
+          'The continuous input completer is null, it should not be null.',
+        );
+      }
+      // 3.2.2 Get the input data from the request of the current continuous input command.
+      // and then send the data to the server.
+      final input = _currentContinueCommand!.request.continueInput;
+      _write(input);
+
       return;
     }
 
-    // Check the response was OK or not.
-    // remove the tag from the response.
-    final successStatus = 'OK';
-    if (response.substring(tag.length + 1).startsWith(successStatus)) {
-      _responseFlash.add(response);
-      // Copy the flash to the response.
-      _pendingResponses[tag]?.complete(_responseFlash);
+    // 4. If the tag was not associated with any pending response, then return.
+    if (!_pendingResponses.containsKey(tag)) {
+      log(
+        'The server did not respond a correct format message: $response',
+        level: LogLevel.ERROR,
+      );
 
-      // Clear the flash.
-      _responseFlash = Response.create([]);
-      // Clear the pending response.
-      _pendingResponses.remove(tag);
-    } else {
-      _pendingResponses[tag]?.completeError(Exception(response));
+      return;
     }
+
+    // 5. Process the full response for the related command.
+    // 5.1 Add the response to the flash.
+    _responseFlash.add(response);
+
+    final isOk = response.substring(tag.length + 1).startsWith('OK');
+
+    // 5.2 If the status of the response is OK, then complete the response with the flash.
+    if (isOk) {
+      _pendingResponses[tag]?.complete(_responseFlash);
+    } else {
+      // 5.3 If the status of the response is not OK, then complete the response with an error.
+      _pendingResponses[tag]?.completeError(Exception(_responseFlash.data));
+    }
+
+    // 6. If the command is a continuous input command, then complete the current continuous input completer.
+    _currentContinueCommand?.completer.complete();
+
+    // 7. Cleaning the useless data.
+    // 7.1 Clear the flash.
+    _responseFlash = Response.create([]);
+    // 7.2 Clear the pending response.
+    _pendingResponses.remove(tag);
   }
 
   /// Callback function when the TCP connection receives data.
@@ -161,20 +213,36 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
   /// The tag is used to identify the response for the command.
   final Map<String, Completer<Response>> _pendingResponses = {};
 
+  /// Declare a completer to wait for the completion of a continuous input command with multiple input lines after the response tag is a sign of '+'.
+  ///
+  /// The completer is prevented that other commands send to the server before the process of the continuous input command is completed.
+  /// So that the response of the continuous input command can be received correctly.
+  /// And the response keeps the same order for every related command with the correct tag.
+  ContinueInputCompleter? _currentContinueCommand;
+
   /// Build a sending message in IMAP format.and then send it to the server.
   /// Waiting for the response for this message.
   Future<Response> _sendCommand(Request request) async {
-    // Compose the command message.
-    final newMsg = request.toMessage();
+    // 1. If the command is a continuous input command, then wait for the completion of the previous continuous input command.
+    await _currentContinueCommand?.completer.future;
+    // 1.1 If the command is a continuous input command, then create a completer to wait for the completion of this command.
+    if (request.continueInput.isNotEmpty) {
+      _currentContinueCommand = ContinueInputCompleter(
+        completer: Completer<void>(),
+        request: request,
+      );
+    }
 
-    // Create a Completer to wait for the response.
+    // 2. Create a Completer with this command tag, the completer is used to wait for the response of this command from the server.
+    // And the response will be followed by the tag to identify this completer and complete it.
     final responseCompleter = Completer<Response>();
     _pendingResponses[request.tag] = responseCompleter;
-    log(newMsg, level: LogLevel.TCP_GOING);
-    _socket?.write(newMsg);
 
+    // 3. Send the message to the server.
+    _write(request.toMessage());
+
+    // 4. Wait for the response of this command and return it.
     final Response result = await responseCompleter.future;
-
     return result;
   }
 
@@ -284,5 +352,31 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
       // 2. Parse the response and hold the result in Mailbox. the response like:
       parseResponseToMailbox(res);
     }
+  }
+
+  final List<int> _createdMessageUids = <int>[];
+
+  @override
+  Future<void> checkAppendCommand({required String body}) async {
+    // 1. Generate the mail content.
+    final mail = Mail(
+      subject: 'Test mail',
+      from: Address(address: username),
+      body: body,
+    );
+
+    // 2. Send the command to append the mail to the mailbox.
+    final Response res = await _sendCommand(
+      Request(
+        command: Command.APPEND,
+        // A003 APPEND saved-messages (\Seen) {310}
+        arguments: ['"$_testingMailbox"', '{${mail.size()}}'],
+        continueInput: "${mail.fullMail}$EOF",
+      ),
+    );
+
+    // 3. Hold the uid of the appended message.
+    final AppendResponse appendResponse = AppendResponse(res.data);
+    _createdMessageUids.add(appendResponse.uid);
   }
 }
