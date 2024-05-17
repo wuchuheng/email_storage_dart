@@ -1,7 +1,6 @@
 import 'dart:async';
 import 'dart:io';
 
-import '../../../config/config.dart';
 import '../../../utilities/log.dart';
 
 /// Connect to the IMAP server over a secure socket.
@@ -27,24 +26,21 @@ Future<SecureSocket> connect({
   // 3. Connect to the IMAP server over a secure socket using the host and port 993. and set the timeout.
   final socket = await SecureSocket.connect(host, 993, timeout: timeout);
 
+  bool isGreetingReceived = false;
+
   // 4. Listen for response from the server.
   socket.listen((List<int> data) {
     final String response = String.fromCharCodes(data);
 
+    log(response.substring(0, response.length - 2), level: LogLevel.TCP_COMING);
+
     // 4.1 Check if the initial greeting is received.
-    if (response.isNotEmpty) {
-      // 4.1.1 If the initial greeting is received, complete the result completer with the secure socket.
-      result.complete(socket);
-
-      // 4.1.2 Cancel the timer.
+    if (!isGreetingReceived && data.isNotEmpty) {
+      isGreetingReceived = true;
       timer.cancel();
-
-      // 4.1.3 Bind the onData callback of the socket to the `onData` callback.
-      response.split(EOF).where((line) => line.isNotEmpty).forEach((line) {
-        log(line, level: LogLevel.TCP_COMING);
-
-        onData(line);
-      });
+      result.complete(socket);
+    } else {
+      onData(response);
     }
   });
 

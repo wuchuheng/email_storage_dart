@@ -1,5 +1,3 @@
-// TODO: Put public facing types in this file.
-
 import 'dart:io';
 
 // Validates the email storage configuration in a private function.

@@ -80,7 +80,7 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
     data
         .split(EOF)
         .where((element) => element.isNotEmpty)
-        .forEach((line) => log(line, level: LogLevel.TCP_GOING));
+        .forEach((line) => log(line, level: LogLevel.TCP_OUTGOING));
 
     // 2. Write the data to the socket.
     _socket?.write(data);

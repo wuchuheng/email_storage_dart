@@ -3,7 +3,7 @@ enum LogLevel {
 
   /// Log level for tcp messages.
   TCP_COMING, // ignore: constant_identifier_names
-  TCP_GOING, // ignore: constant_identifier_names
+  TCP_OUTGOING, // ignore: constant_identifier_names
 
   /// Log level for info messages.
   INFO, // ignore: constant_identifier_names
@@ -24,7 +24,7 @@ void log(String message, {LogLevel level = LogLevel.INFO}) {
     case LogLevel.TCP_COMING:
       logLevel = 'TCP <-';
       break;
-    case LogLevel.TCP_GOING:
+    case LogLevel.TCP_OUTGOING:
       logLevel = 'TCP ->';
       break;
     default:

@@ -9,16 +9,6 @@ void main() {
   group('Access .env file test', () {
     test('Access all email accounts from env', () => testAccessEnv());
   });
-  // group('IMAP client test', () {
-  //   test('Test IMAP client connection', () => testImapConnection());
-  //   test('Test the connection timeout of IMAP client',
-  //       () => testImapFirstResponseTimeout());
-  //   test('Test the first response from the IMAP was incorrect',
-  //       () => testImapFirstResponseIncorrect());
-  // });
-  // group('IMAP capability test', () {
-  //   test('Test the capability of the IMAP server', () => testImapCapability());
-  // });
 
   group('IMAP client test', () {
     // 1. Get the first IMAP account from the .env file.
@@ -34,5 +24,9 @@ void main() {
 
     // 3. Connect to the IMAP server.
     test('Test IMAP client connection', () async => await imapClient.connect());
+    test(
+      'Test the `CAPABILITY` command.',
+      () async => await imapClient.capability(),
+    );
   });
 }

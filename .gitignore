@@ -9,3 +9,5 @@ pubspec.lock
 .idea/
 .env
 test_certs/
+
+.DS_Store
