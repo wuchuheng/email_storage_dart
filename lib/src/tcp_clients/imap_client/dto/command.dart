@@ -19,4 +19,5 @@ enum Command {
   CREATE, // ignore: constant_identifier_names
   SELECT, // ignore: constant_identifier_names
   APPEND, // ignore: constant_identifier_names
+  FETCH, // ignore: constant_identifier_names
 }

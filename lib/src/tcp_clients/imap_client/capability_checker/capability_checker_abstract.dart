@@ -26,4 +26,7 @@ abstract class Imap4CapabilityCheckerAbstract {
 
   // Check if the command: `APPEND` is valid.
   Future<void> checkAppendCommand({required String body});
+
+  // Check if the command: `FETCH` is valid.
+  Future<void> checkFetchCommand();
 }

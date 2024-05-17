@@ -87,11 +87,20 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
   }
 
   void _responseHandler(String response) {
+    // TODO: There must be create multiple response handlers to handle the different commands.
+    // Only by doing so can the code be more readable and maintainable.
+
     // 1. Check the tag in the response.
     final tag = response.split(' ')[0];
     final isIncorrectTag =
         !_pendingResponses.containsKey(tag) && !["*", "+"].contains(tag);
     if (isIncorrectTag) {
+      //
+      if (_currentContinueCommand?.request.command == Command.FETCH) {
+        _responseFlash.add(response);
+        return;
+      }
+
       log('The server did not respond a correct format message: $response',
           level: LogLevel.ERROR);
       return;
@@ -149,7 +158,10 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
     }
 
     // 6. If the command is a continuous input command, then complete the current continuous input completer.
-    _currentContinueCommand?.completer.complete();
+    // If the completer is not completed, then complete it.
+    if (_currentContinueCommand?.completer.isCompleted == false) {
+      _currentContinueCommand?.completer.complete();
+    }
 
     // 7. Cleaning the useless data.
     // 7.1 Clear the flash.
@@ -359,7 +371,7 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
   @override
   Future<void> checkAppendCommand({required String body}) async {
     // 1. Generate the mail content.
-    final mail = Mail(
+    final mail = MailBuild(
       subject: 'Test mail',
       from: Address(address: username),
       body: body,
@@ -378,5 +390,24 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
     // 3. Hold the uid of the appended message.
     final AppendResponse appendResponse = AppendResponse(res.data);
     _createdMessageUids.add(appendResponse.uid);
+  }
+
+  @override
+  Future<void> checkFetchCommand() async {
+    // 1. Select the mailbox.
+    await _sendCommand(
+      Request(command: Command.SELECT, arguments: ['"$_testingMailbox"']),
+    );
+    // 2. Loop through the created message uids and fetch the message.
+    for (final uid in _createdMessageUids) {
+      final res = await _sendCommand(
+        Request(
+          command: Command.FETCH,
+          arguments: ['$uid (BODY[])'],
+        ),
+      );
+      // 3. Parse the response and hold the result in Mail. the response like:
+      print(res.data);
+    }
   }
 }

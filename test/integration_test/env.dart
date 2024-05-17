@@ -1,3 +1,5 @@
+import 'dart:io';
+
 import 'package:test/expect.dart';
 import 'package:wuchuheng_env/wuchuheng_env.dart';
 
@@ -15,6 +17,7 @@ class ImapAccount {
 
 // Get the list of imap accounts from the .env file in the `getImapAccounts` function.
 List<ImapAccount> getImapAccounts() {
+  DotEnv(path: '${Directory.current.path}/.env');
   // Declare a list of EmailAccount objects.
   final imapAccounts = <ImapAccount>[];
   // while loop to get all email accounts from the .env file.

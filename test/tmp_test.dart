@@ -1,5 +1,4 @@
 import 'package:test/test.dart';
-import 'package:wuchuheng_email_storage/src/config/config.dart';
 
 //       final mail = """
 // Mime-Version: 1.0
@@ -11,13 +10,46 @@ import 'package:wuchuheng_email_storage/src/config/config.dart';
 //       final l = mail.length + mail.split('\n').length - 1;
 //       print(l);
 
-final str =
-    """Mime-Version: 1.0${EOF}Content-Type: text/plain; charset=us-ascii${EOF}Subject: Test mail${EOF}From: chuheng.wu@icloud.com${EOF}This is a test mail1.""";
 void main() {
   group('Imap4CapabilityCheckerAbstract', () {
     test('checkConnection', () async {
-      final len = str.length;
-      print(len);
+      // Date: Thu, 16 May 2024 18:03:13.775898 +0800
+      final dayInWeek = [
+        'Sun',
+        'Mon',
+        'Tue',
+        'Wed',
+        'Thu',
+        'Fri',
+        'Sat',
+      ][DateTime.now().weekday];
+      final month = [
+        'Jan',
+        'Feb',
+        'Mar',
+        'Apr',
+        'May',
+        'Jun',
+        'Jul',
+        'Aug',
+        'Sep',
+        'Oct',
+        'Nov',
+        'Dec',
+      ][DateTime.now().month - 1];
+      // Get the time zone like: +0800
+      String timeZone =
+          '${DateTime.now().timeZoneOffset.inHours.toString().padLeft(2, '0')}00';
+      // Add the '+' sign or the '-' sign.
+      timeZone = DateTime.now().timeZoneOffset.isNegative
+          ? '-$timeZone'
+          : '+$timeZone';
+      final year = DateTime.now().year.toString();
+      final nowTime = DateTime.now().toString().split(' ')[1];
+
+      final date =
+          '$dayInWeek, ${DateTime.now().day} $month $year $nowTime $timeZone';
+      print(date);
     });
   });
 }

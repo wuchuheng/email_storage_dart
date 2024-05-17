@@ -96,5 +96,6 @@ Future<void> testImapCapability() async {
     await imapCapabilityChecker.checkAppendCommand(
       body: 'This is a test mail3.',
     );
+    await imapCapabilityChecker.checkFetchCommand();
   }
 }
