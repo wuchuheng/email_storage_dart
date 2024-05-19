@@ -1,6 +1,6 @@
 import 'package:wuchuheng_email_storage/src/config/config.dart';
 
-import './command.dart';
+import '../command.dart';
 
 final _tagPrefixMapMessageCount = <String, int>{};
 
@@ -32,7 +32,9 @@ class Request {
   }
 
   /// Generate a message in IMAP format.
-  String toMessage() {
+  ///
+  @override
+  String toString() {
     String argumentsString = arguments.join(' ');
     if (argumentsString.isNotEmpty) {
       argumentsString = ' $argumentsString';

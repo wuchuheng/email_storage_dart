@@ -1,6 +1,6 @@
 import 'dart:async';
 
-import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/request.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/request/request.dart';
 
 class CurrentExecuteCommand {
   final Request request;

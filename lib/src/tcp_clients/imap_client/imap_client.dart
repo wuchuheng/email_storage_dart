@@ -3,14 +3,17 @@ import 'dart:io';
 
 import 'package:wuchuheng_email_storage/src/config/config.dart';
 import 'package:wuchuheng_email_storage/src/exceptions/imap_response_exception.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/login.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/current_execute_command.dart';
-import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/request.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/request/request.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response/capability_response.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response/response.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/imap_client_abstract.dart';
 import 'package:wuchuheng_email_storage/src/utilities/log.dart';
+import 'package:wuchuheng_hooks/wuchuheng_hooks.dart';
 
-import './services/connect_service.dart' as connect_service;
-import './services/capability_service.dart' as capability_service;
+import 'commands/connect.dart' as connect_service;
+import 'commands/capability.dart' as capability_service;
 
 class ImapClient implements ImapClientAbstract {
   final String host;
@@ -18,6 +21,9 @@ class ImapClient implements ImapClientAbstract {
   final String password;
   final Duration timeout;
   late SecureSocket _socket;
+
+  /// The register to omit the data from the server to the subscriber with the callback.
+  final Hook<String> _dataRegister = Hook<String>('');
 
   ImapClient({
     required this.host,
@@ -33,11 +39,25 @@ class ImapClient implements ImapClientAbstract {
 
   @override
   Future<void> connect() async {
+    // 1. Print the log when the comming data from the server.
+    _dataRegister.subscribe((response, _) {
+      log(
+        response.substring(0, response.length - 2),
+        level: LogLevel.TCP_COMING,
+      );
+    });
+
+    // 2. Connect to the IMAP server over a secure socket.
     _socket = await connect_service.connect(
       host: host,
       timeout: timeout,
-      onData: _onData,
+      dataRegister: _dataRegister,
     );
+
+    // 3. Bind the data handler to the socket.
+    _dataRegister.subscribe((data, _) {
+      _onData(data);
+    });
   }
 
   /// Store the response data into the flush;
@@ -94,7 +114,7 @@ class ImapClient implements ImapClientAbstract {
     );
 
     // 3. write the request to the server.
-    final message = request.toMessage();
+    final message = request.toString();
     log(message.substring(0, message.length - 2), level: LogLevel.TCP_OUTGOING);
     _socket.write(message);
 
@@ -105,5 +125,18 @@ class ImapClient implements ImapClientAbstract {
   @override
   Future<CapabilityResponse> capability() async {
     return capability_service.capability(writeCommand: _write);
+  }
+
+  @override
+  Future<Response<void>> login() async {
+    final validator = await LoginCommand(
+      username: username,
+      password: password,
+      writeCommand: _write,
+    ).fetch();
+
+    final result = validator.validate().parse();
+
+    return result;
   }
 }

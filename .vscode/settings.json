@@ -1,0 +1,10 @@
+{
+    "editor.formatOnSave": true,
+    "dart.runPubGetOnPubspecChanges": true,
+    "files.associations": {
+        "*.dart": "dart"
+    },
+    "editor.codeActionsOnSave": {
+        "source.fixAll": true
+    }
+}

@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import '../../../utilities/log.dart';
+import 'package:wuchuheng_hooks/src/index.dart';
 
 /// Connect to the IMAP server over a secure socket.
 ///
@@ -11,7 +11,7 @@ import '../../../utilities/log.dart';
 Future<SecureSocket> connect({
   required String host,
   required Duration timeout,
-  required Function(String) onData,
+  required Hook<String> dataRegister,
 }) async {
   // 1. Create a result completer to return the result of the connection.
   final Completer<SecureSocket> result = Completer();
@@ -29,19 +29,16 @@ Future<SecureSocket> connect({
   bool isGreetingReceived = false;
 
   // 4. Listen for response from the server.
-  socket.listen((List<int> data) {
-    final String response = String.fromCharCodes(data);
-
-    log(response.substring(0, response.length - 2), level: LogLevel.TCP_COMING);
-
+  socket.listen((List<int> data) async {
     // 4.1 Check if the initial greeting is received.
     if (!isGreetingReceived && data.isNotEmpty) {
       isGreetingReceived = true;
       timer.cancel();
       result.complete(socket);
-    } else {
-      onData(response);
+      // 4.2 Cancel the listener after the initial greeting is received.
     }
+    // 4.3 Omit the data to the subscriber through the data register.
+    dataRegister.set(String.fromCharCodes(data));
   });
 
   // 5. Wait for the first response from the server.

@@ -1,6 +1,6 @@
 import 'package:wuchuheng_email_storage/src/exceptions/imap_response_exception.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/command.dart';
-import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/request.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/request/request.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response/capability_response.dart';
 
 Future<CapabilityResponse> capability({

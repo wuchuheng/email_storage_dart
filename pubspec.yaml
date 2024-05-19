@@ -9,6 +9,7 @@ environment:
 # Add regular dependencies here.
 dependencies:
   wuchuheng_env: ^1.0.4
+  wuchuheng_hooks: ^0.1.0
   # path: ^1.8.0
 
 dev_dependencies:

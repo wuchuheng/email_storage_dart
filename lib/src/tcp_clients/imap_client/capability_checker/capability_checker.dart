@@ -10,7 +10,7 @@ import '../capability_checker/capability_checker_abstract.dart';
 import '../dto/address.dart';
 import '../dto/command.dart';
 import '../dto/mail.dart';
-import '../dto/request.dart';
+import '../dto/request/request.dart';
 import '../dto/response.dart';
 
 class ContinueInputCompleter {
@@ -251,7 +251,7 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
     _pendingResponses[request.tag] = responseCompleter;
 
     // 3. Send the message to the server.
-    _write(request.toMessage());
+    _write(request.toString());
 
     // 4. Wait for the response of this command and return it.
     final Response result = await responseCompleter.future;

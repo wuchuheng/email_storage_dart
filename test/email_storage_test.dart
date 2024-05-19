@@ -28,5 +28,6 @@ void main() {
       'Test the `CAPABILITY` command.',
       () async => await imapClient.capability(),
     );
+    test('Test the `LOGIN` command.', () async => await imapClient.login());
   });
 }
