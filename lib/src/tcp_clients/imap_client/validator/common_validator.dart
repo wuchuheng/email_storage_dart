@@ -1,3 +1,5 @@
+import 'package:wuchuheng_email_storage/src/exceptions/imap_response_exception.dart';
+
 /// Checks the validity of a response from an IMAP server.
 ///
 /// This function performs two checks:
@@ -11,12 +13,27 @@
 void checkResponseFormat(List<String> response, String tag) {
   // 1. Check the acount of list of response must be 1 or more than 1.
   if (response.isEmpty) {
-    throw Exception('The response is empty.');
+    throw ResponseException('The response is empty.');
   }
 
   // 2. Check the last line of the response must be include the tag.
   final lastLine = response.last;
-  if (!lastLine.contains(tag)) {
-    throw Exception('The response does not include the tag: $tag.');
+  if (!lastLine.startsWith(tag)) {
+    throw ResponseException('The response does not include the tag: $tag.');
+  }
+
+  // 3. Check the response status.
+  // 3.1 Get the status from the last line.
+  final status = lastLine.substring(tag.length + 1).split(' ').first;
+  // 3.2 Check the status.
+  switch (status) {
+    case 'OK':
+      break;
+    case 'NO':
+      throw ResponseException('The response status is NO.');
+    case 'BAD':
+      throw ResponseException('The response status is BAD.');
+    default:
+      throw ResponseException('The response status: $status is unknown.');
   }
 }

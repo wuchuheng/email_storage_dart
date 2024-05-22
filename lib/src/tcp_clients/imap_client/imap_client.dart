@@ -3,8 +3,10 @@ import 'dart:io';
 
 import 'package:wuchuheng_email_storage/src/config/config.dart';
 import 'package:wuchuheng_email_storage/src/exceptions/imap_response_exception.dart';
+import 'package:wuchuheng_email_storage/src/exceptions/login_exception.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/login.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/current_execute_command.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/mailbox.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/request/request.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response/capability_response.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response/response.dart';
@@ -14,6 +16,7 @@ import 'package:wuchuheng_hooks/wuchuheng_hooks.dart';
 
 import 'commands/connect.dart' as connect_service;
 import 'commands/capability.dart' as capability_service;
+import 'commands/select.dart';
 
 class ImapClient implements ImapClientAbstract {
   final String host;
@@ -21,6 +24,7 @@ class ImapClient implements ImapClientAbstract {
   final String password;
   final Duration timeout;
   late SecureSocket _socket;
+  bool _isLogin = false;
 
   /// The register to omit the data from the server to the subscriber with the callback.
   final Hook<String> _dataRegister = Hook<String>('');
@@ -129,14 +133,73 @@ class ImapClient implements ImapClientAbstract {
 
   @override
   Future<Response<void>> login() async {
-    final validator = await LoginCommand(
+    // 1. Check if the client is already logged in.
+    if (_isLogin) {
+      throw ResponseException('The client is already logged in.');
+    }
+
+    // 2. Login to the server.
+    final loginCommand = await Login(
       username: username,
       password: password,
       writeCommand: _write,
     ).fetch();
 
-    final result = validator.validate().parse();
+    // 2.1 Set the login status to true.
+    _isLogin = true;
+
+    // 3. Return the result.
+    final result = loginCommand.validate().parse();
 
     return result;
+  }
+
+  Mailbox? _selectedMailbox;
+
+  @override
+  Future<Response<Mailbox>> select({required String mailbox}) async {
+    // 1. Check if the client is already logged in.
+    if (!_isLogin) {
+      throw LoginException('The client is not logged in.');
+    }
+
+    // 1.1 Create a select command.
+    Select<Mailbox> selectCommand =
+        Select(mailbox: mailbox, socketWrite: _write);
+
+    // 2. Fetch the select command.
+    await selectCommand.fetch();
+
+    // 3. Validate the response.
+    selectCommand.validate();
+
+    // 4. Parse the response.
+    final Response<Mailbox> response = selectCommand.parse();
+
+    // 5. Set the selected mailbox.
+    _selectedMailbox = response.data;
+
+    return response;
+  }
+
+  @override
+  Future<Response<void>> create({required String mailbox}) {
+    // TODO: implement create
+    throw UnimplementedError();
+  }
+
+  @override
+  Future<void> fetch() {
+    // 1. Check if the client is already logged in.
+    if (!_isLogin) {
+      throw LoginException('The client is not logged in.');
+    }
+    // 2. Check if the selected mailbox is not null.
+    if (_selectedMailbox == null) {
+      throw ResponseException('No mailbox is selected.');
+    }
+
+    // TODO: implement fetch
+    throw UnimplementedError();
   }
 }

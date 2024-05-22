@@ -1,3 +1,6 @@
+import 'dart:async';
+
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/mailbox.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response/capability_response.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response/response.dart';
 
@@ -36,4 +39,34 @@ abstract class ImapClientAbstract {
   ///
   /// Throws an [ImapException] if the login fails.
   Future<Response<void>> login();
+
+  /// Selects a mailbox on the server using the `SELECT` command as per the IMAP4rev1 protocol.
+  ///
+  /// This method allows the client to select a specific mailbox on the server.
+  /// The `SELECT` command is part of the IMAP4rev1 protocol and is used to
+  /// indicate that the client wants to access a specific mailbox for reading
+  /// or writing operations.
+  ///
+  /// Example usage:
+  /// ```dart
+  /// ImapClientAbstract client = ImapClientAbstract();
+  /// client.selectMailbox(mailbox: 'inbox');
+  /// ```
+  Future<Response<Mailbox>> select({required String mailbox});
+
+  /// Generates the documentation for the command `CREATE` in the IMAP protocol.
+  ///
+  /// This command is used to create a new mailbox on the mail server.
+  /// The mailbox name should be specified as an argument to the command.
+  /// If the mailbox already exists, the server will return an error.
+  ///
+  /// Example usage:
+  /// ```
+  /// CREATE "inbox"
+  /// ```
+  ///
+  /// For more information about the IMAP protocol, refer to the RFC 3501 specification.
+  Future<Response<void>> create({required String mailbox});
+
+  Future<void> fetch();
 }

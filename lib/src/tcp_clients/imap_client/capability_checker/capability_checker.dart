@@ -2,8 +2,8 @@ import 'dart:async';
 import 'dart:io';
 
 import 'package:wuchuheng_email_storage/src/exceptions/imap_response_exception.dart';
-import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/mailbox.dart';
 import 'package:wuchuheng_email_storage/src/utilities/log.dart';
+import 'package:wuchuheng_email_storage/src/utilities/mailbox_util.dart';
 
 import '../../../config/config.dart';
 import '../capability_checker/capability_checker_abstract.dart';
@@ -87,7 +87,6 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
   }
 
   void _responseHandler(String response) {
-    // TODO: There must be create multiple response handlers to handle the different commands.
     // Only by doing so can the code be more readable and maintainable.
 
     // 1. Check the tag in the response.
@@ -362,7 +361,7 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
         Request(command: Command.SELECT, arguments: ['"$box"']),
       );
       // 2. Parse the response and hold the result in Mailbox. the response like:
-      parseResponseToMailbox(res);
+      MailboxUtil.parseResponseToMailbox(res.data);
     }
   }
 

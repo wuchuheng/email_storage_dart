@@ -29,5 +29,8 @@ void main() {
       () async => await imapClient.capability(),
     );
     test('Test the `LOGIN` command.', () async => await imapClient.login());
+    test('Test the `SELECT` command.', () async {
+      await imapClient.select(mailbox: 'INBOX');
+    });
   });
 }

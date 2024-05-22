@@ -2,7 +2,7 @@
 enum ResponseStatus { OK, NO, BAD }
 
 class Response<T> {
-  final T data;
+  T data;
   final String tag;
   final ResponseStatus status;
   final String message;

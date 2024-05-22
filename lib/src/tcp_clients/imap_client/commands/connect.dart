@@ -1,7 +1,7 @@
 import 'dart:async';
 import 'dart:io';
 
-import 'package:wuchuheng_hooks/src/index.dart';
+import 'package:wuchuheng_hooks/wuchuheng_hooks.dart';
 
 /// Connect to the IMAP server over a secure socket.
 ///
