@@ -3,18 +3,17 @@ import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/command.
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/mailbox.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/request/request.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response/response.dart';
-import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/validator/common_validator.dart';
-import 'package:wuchuheng_email_storage/src/utilities/response.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/imap_client.dart';
 
 import '../../../utilities/mailbox_util.dart';
 
 class Select<T> implements CommandAbstract {
   final String mailbox;
-  late List<String> _response;
+  late Response<List<String>> _response;
 
   late Request _request;
 
-  Future<List<String>> Function({required Request request}) socketWrite;
+  OnImapWriteType socketWrite;
 
   Select({required this.mailbox, required this.socketWrite});
 
@@ -31,27 +30,15 @@ class Select<T> implements CommandAbstract {
 
   @override
   Response<Mailbox> parse() {
-    Response<List<String>> response = ResponseUtile.parseResponse(
-      response: _response,
-      tag: _request.tag,
-    );
-
-    final Mailbox mailbox = MailboxUtil.parseResponseToMailbox(_response);
+    final Mailbox mailbox = MailboxUtil.parseResponseToMailbox(_response.data);
     final Response<Mailbox> result = Response(
       data: mailbox,
-      tag: response.tag,
-      status: response.status,
-      message: response.message,
-      code: response.code,
+      tag: _response.tag,
+      status: _response.status,
+      message: _response.message,
+      code: _response.code,
     );
 
     return result;
-  }
-
-  @override
-  CommandAbstract validate() {
-    checkResponseFormat(_response, _request.tag);
-
-    return this;
   }
 }

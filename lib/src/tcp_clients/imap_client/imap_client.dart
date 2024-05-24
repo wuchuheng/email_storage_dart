@@ -1,22 +1,32 @@
 import 'dart:async';
+import 'dart:convert';
 import 'dart:io';
 
 import 'package:wuchuheng_email_storage/src/config/config.dart';
 import 'package:wuchuheng_email_storage/src/exceptions/imap_response_exception.dart';
-import 'package:wuchuheng_email_storage/src/exceptions/login_exception.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/create.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/list.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/login.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/current_execute_command.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/folder.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/mailbox.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/request/request.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response/capability_response.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response/response.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/imap_client_abstract.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/validator/login_status_validator.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/validator/login_validator.dart';
 import 'package:wuchuheng_email_storage/src/utilities/log.dart';
+import 'package:wuchuheng_email_storage/src/utilities/response.dart';
 import 'package:wuchuheng_hooks/wuchuheng_hooks.dart';
 
 import 'commands/connect.dart' as connect_service;
 import 'commands/capability.dart' as capability_service;
 import 'commands/select.dart';
+
+typedef OnImapWriteType = Future<Response<List<String>>> Function({
+  required Request request,
+});
 
 class ImapClient implements ImapClientAbstract {
   final String host;
@@ -72,7 +82,7 @@ class ImapClient implements ImapClientAbstract {
     final String tag = _currentExecuteCommand!.request.tag;
 
     // 2. Parse the data from the server, and complete the completer.
-    data.split(EOF).where((e) => e.isNotEmpty).forEach((line) {
+    LineSplitter.split(data).where((e) => e.isNotEmpty).forEach((line) {
       // 2.1 Add the line to the flush.
       _flush.add(line);
 
@@ -97,7 +107,9 @@ class ImapClient implements ImapClientAbstract {
   CurrentExecuteCommand? _currentExecuteCommand;
 
   /// handle the data write to the server by the socket.
-  Future<List<String>> _write({required Request request}) async {
+  ///
+  // ignore: prefer_function_declarations_over_variables
+  late final OnImapWriteType _write = ({required Request request}) async {
     // 1. Wait the previous command response from the server finished.
     if (_currentExecuteCommand?.completer.isCompleted == false) {
       await _currentExecuteCommand!.completer.future;
@@ -122,9 +134,19 @@ class ImapClient implements ImapClientAbstract {
     log(message.substring(0, message.length - 2), level: LogLevel.TCP_OUTGOING);
     _socket.write(message);
 
-    // 4. Return the completer future.
-    return _currentExecuteCommand!.completer.future;
-  }
+    // 4. Validate the response format is correct.
+    final List<String> response =
+        await _currentExecuteCommand!.completer.future;
+
+    ResponseUtile.validateFormat(response, request.tag);
+
+    // 5. Return the response.
+    // 5.1 Format the response from IMAP Server.
+    final result =
+        ResponseUtile.parseResponse(response: response, tag: request.tag);
+
+    return result;
+  };
 
   @override
   Future<CapabilityResponse> capability() async {
@@ -134,9 +156,7 @@ class ImapClient implements ImapClientAbstract {
   @override
   Future<Response<void>> login() async {
     // 1. Check if the client is already logged in.
-    if (_isLogin) {
-      throw ResponseException('The client is already logged in.');
-    }
+    LoginValidator(password: password, username: username).validate();
 
     // 2. Login to the server.
     final loginCommand = await Login(
@@ -149,7 +169,7 @@ class ImapClient implements ImapClientAbstract {
     _isLogin = true;
 
     // 3. Return the result.
-    final result = loginCommand.validate().parse();
+    final result = loginCommand.parse();
 
     return result;
   }
@@ -159,41 +179,46 @@ class ImapClient implements ImapClientAbstract {
   @override
   Future<Response<Mailbox>> select({required String mailbox}) async {
     // 1. Check if the client is already logged in.
-    if (!_isLogin) {
-      throw LoginException('The client is not logged in.');
-    }
+    LoginStatusValidator(isLogin: _isLogin).validate();
 
     // 1.1 Create a select command.
-    Select<Mailbox> selectCommand =
-        Select(mailbox: mailbox, socketWrite: _write);
+    Select<Mailbox> selectCommand = Select(
+      mailbox: mailbox,
+      socketWrite: _write,
+    );
 
     // 2. Fetch the select command.
     await selectCommand.fetch();
 
-    // 3. Validate the response.
-    selectCommand.validate();
-
-    // 4. Parse the response.
+    // 3. Parse the response.
     final Response<Mailbox> response = selectCommand.parse();
 
-    // 5. Set the selected mailbox.
+    // 4. Set the selected mailbox.
     _selectedMailbox = response.data;
 
     return response;
   }
 
   @override
-  Future<Response<void>> create({required String mailbox}) {
-    // TODO: implement create
-    throw UnimplementedError();
+  Future<Response<void>> create({required String mailbox}) async {
+    // 1. Check if the client is already logged in.
+    LoginStatusValidator(isLogin: _isLogin).validate();
+
+    // 2. Execute the create command.
+    final createCommand = await Create(mailbox: mailbox, write: _write).fetch();
+
+    // 3. Parse the response.
+    createCommand.parse();
+
+    // 4. Return the result.
+
+    throw UnimplementedError('');
   }
 
   @override
   Future<void> fetch() {
     // 1. Check if the client is already logged in.
-    if (!_isLogin) {
-      throw LoginException('The client is not logged in.');
-    }
+    LoginStatusValidator(isLogin: _isLogin).validate();
     // 2. Check if the selected mailbox is not null.
     if (_selectedMailbox == null) {
       throw ResponseException('No mailbox is selected.');
@@ -201,5 +226,29 @@ class ImapClient implements ImapClientAbstract {
 
     // TODO: implement fetch
     throw UnimplementedError();
+  }
+
+  @override
+  Future<Response<List<Folder>>> list({
+    String name = "",
+    String pattern = "",
+  }) async {
+    // 1. Check if the client is already logged in.
+    LoginStatusValidator(isLogin: _isLogin).validate();
+
+    // 2. Create a list command.
+    final listCommand = ListCommand(
+      onWrite: _write,
+      name: name,
+      pattern: pattern,
+    );
+
+    // 3. Fetch the list command.
+    await listCommand.fetch();
+    // 4. Parse the response.
+    final Response<List<Folder>> result = listCommand.parse();
+
+    // 5. Return the response.
+    return result;
   }
 }

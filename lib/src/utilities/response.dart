@@ -1,37 +1,41 @@
 import 'package:wuchuheng_email_storage/src/exceptions/imap_response_exception.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response/response.dart';
 
-void _validateResponseFormat(List<String> response, String tag) {
-  // 1. Check the response is not empty.
-  if (response.isEmpty) {
-    throw ResponseException('The response is empty.');
-  }
-
-  // 2. Check the laster line of response is started with the tag.
-  if (!response.last.startsWith(tag)) {
-    throw ResponseException('The response is not started with the tag:$tag.');
-  }
-}
-
+/// A utility class for handling responses.
+///
+/// This class provides static methods for validating, parsing, and manipulating responses.
 class ResponseUtile {
+  /// Validates the format of a response.
+  ///
+  /// Checks if the response is not empty and if the last line of the response starts with the provided tag.
+  /// Throws a [ResponseException] if any of these conditions is not met.
+  ///
+  /// The [response] argument is the response to validate.
+  /// The [tag] argument is the tag that each line of the response should start with.
+  static void validateFormat(List<String> response, String tag) {
+    // 1. Check the response is not empty.
+    if (response.isEmpty) {
+      throw ResponseException('The response is empty.');
+    }
+
+    // 2. Check the laster line of response is started with the tag.
+    if (!response.last.startsWith(tag)) {
+      throw ResponseException('The response is not started with the tag:$tag.');
+    }
+  }
+
   /// Parses the status of a response.
   ///
-  /// This method takes no arguments and returns a [ResponseStatus] object.
-  /// It is used to parse the status of a response and convert it into a
-  /// [ResponseStatus] object for easier handling and manipulation.
+  /// Returns a [ResponseStatus] object representing the status of the response.
   ///
-  /// Example usage:
-  /// ```dart
-  /// ResponseStatus status = Response.parseStatus();
-  /// print(status.statusCode);
-  /// print(status.message);
-  /// ```
+  /// The [response] argument is the response to parse.
+  /// The [tag] argument is the tag that each line of the response should start with.
   static ResponseStatus parseStatus({
     required List<String> response,
     required String tag,
   }) {
     // 1. Validate the response format.
-    _validateResponseFormat(response, tag);
+    validateFormat(response, tag);
 
     // 2. Parse the status from the last line of the response.
     final status = response.last.substring(tag.length + 1).split(' ').first;
@@ -47,16 +51,18 @@ class ResponseUtile {
     }
   }
 
-  /// Parses the message from the response.
+  /// Parses the message from a response.
   ///
-  /// This method takes in a response and extracts the message from it.
-  /// It returns the parsed message as a string.
+  /// Returns the parsed message as a string.
+  ///
+  /// The [response] argument is the response to parse.
+  /// The [tag] argument is the tag that each line of the response should start with.
   static String parseMessage({
     required List<String> response,
     required String tag,
   }) {
     // 1. Validate the response format.
-    _validateResponseFormat(response, tag);
+    validateFormat(response, tag);
 
     // 2. Parse the message from the last line of the response.
     String message =
@@ -68,13 +74,18 @@ class ResponseUtile {
     return message;
   }
 
-  /// Parses the code from the response.
+  /// Parses the code from a response.
+  ///
+  /// Returns the parsed code as a string.
+  ///
+  /// The [response] argument is the response to parse.
+  /// The [tag] argument is the tag that each line of the response should start with.
   static String parseCode({
     required List<String> response,
     required String tag,
   }) {
     // 1. Validate the response format.
-    _validateResponseFormat(response, tag);
+    validateFormat(response, tag);
 
     // 2. Parse the code from the last line of the response.
     String code =
@@ -86,6 +97,13 @@ class ResponseUtile {
     return result;
   }
 
+  /// Removes the tag from a response.
+  ///
+  /// Returns a new response with the tag removed from each line.
+  /// Throws a [ResponseException] if a line does not start with the tag.
+  ///
+  /// The [response] argument is the response to remove the tag from.
+  /// The [tag] argument is the tag to remove.
   static List<String> removeTag(List<String> response, String tag) {
     return response.map((line) {
       if (line.startsWith(tag)) {
@@ -101,12 +119,18 @@ class ResponseUtile {
     }).toList();
   }
 
+  /// Parses a response.
+  ///
+  /// Returns a [Response] object with the status, message, code, and data parsed from the response.
+  ///
+  /// The [response] argument is the response to parse.
+  /// The [tag] argument is the tag that each line of the response should start with.
   static Response<List<String>> parseResponse({
     required List<String> response,
     required String tag,
   }) {
     // 1. Validate the response format.
-    _validateResponseFormat(response, tag);
+    validateFormat(response, tag);
 
     // 2. Remove the tag from the response.
     final List<String> result = removeTag(response, tag);

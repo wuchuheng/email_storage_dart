@@ -1,61 +1,81 @@
 import 'package:test/test.dart';
 
-//       final mail = """
-// Mime-Version: 1.0
-// From: Fred Foobar <chuheng.wu@icloud.com>
-// Content-Type: text/plain; charset=us-ascii
-//
-// 54321
-// """;
-//       final l = mail.length + mail.split('\n').length - 1;
-//       print(l);
+import 'dart:convert';
+
+// Class to represent an IMAP folder
+class ImapFolder {
+  final String name;
+  final List<String> attributes;
+  final String delimiter;
+
+  ImapFolder({
+    required this.name,
+    required this.attributes,
+    required this.delimiter,
+  });
+
+  @override
+  String toString() {
+    return 'ImapFolder(name: $name, attributes: $attributes, delimiter: $delimiter)';
+  }
+}
+
+// Function to parse the IMAP response and return a list of folders
+List<ImapFolder> parseImapFolders(String response) {
+  final folderList = <ImapFolder>[];
+  final lines = LineSplitter.split(response);
+
+  for (var line in lines) {
+    if (line.startsWith('* LIST')) {
+      // Extract attributes
+      final attributesMatch = RegExp(r'\(([^)]*)\)').firstMatch(line);
+      final List<String> attributes = attributesMatch != null
+          ? attributesMatch.group(1)?.split(' ') ?? []
+          : [];
+
+      // Extract delimiter and folder name
+      final remainingPart = line.split(') ')[1];
+      final parts = remainingPart.split(' "');
+      final delimiter = parts[0].replaceAll('"', '');
+      final name = parts[1].replaceAll('"', '');
+
+      // Create and add the folder to the list
+      folderList.add(ImapFolder(
+        name: name,
+        attributes: attributes,
+        delimiter: delimiter,
+      ));
+    }
+  }
+
+  return folderList;
+}
 
 void main() {
   group('Imap4CapabilityCheckerAbstract', () {
-    // test('checkConnection', () async {
-    //   // Date: Thu, 16 May 2024 18:03:13.775898 +0800
-    //   final dayInWeek = [
-    //     'Sun',
-    //     'Mon',
-    //     'Tue',
-    //     'Wed',
-    //     'Thu',
-    //     'Fri',
-    //     'Sat',
-    //   ][DateTime.now().weekday];
-    //   final month = [
-    //     'Jan',
-    //     'Feb',
-    //     'Mar',
-    //     'Apr',
-    //     'May',
-    //     'Jun',
-    //     'Jul',
-    //     'Aug',
-    //     'Sep',
-    //     'Oct',
-    //     'Nov',
-    //     'Dec',
-    //   ][DateTime.now().month - 1];
-    //   // Get the time zone like: +0800
-    //   String timeZone =
-    //       '${DateTime.now().timeZoneOffset.inHours.toString().padLeft(2, '0')}00';
-    //   // Add the '+' sign or the '-' sign.
-    //   timeZone = DateTime.now().timeZoneOffset.isNegative
-    //       ? '-$timeZone'
-    //       : '+$timeZone';
-    //   final year = DateTime.now().year.toString();
-    //   final nowTime = DateTime.now().toString().split(' ')[1];
-
-    //   final date =
-    //       '$dayInWeek, ${DateTime.now().day} $month $year $nowTime $timeZone';
-    //   print(date);
-    // });
-
     test("Test", () {
-      final str = "L1 OK user chuheng.wu logged in";
-      final subStr = str.substring(0);
-      print(subStr);
+      // Example IMAP server response
+      const imapResponse = '''
+* LIST () "/" "Archive"
+* LIST () "/" "Junk"
+* LIST () "/" "tmp/.history/index"
+* LIST (\\Noinferiors) "/" "INBOX"
+* LIST () "/" "tmp/.history/actions"
+* LIST () "/" "tmp"
+* LIST () "/" "tmp/.history"
+* LIST (\\Trash) "/" "Deleted Messages"
+* LIST (\\Sent) "/" "Sent Messages"
+* LIST () "/" "Drafts"
+L1 OK LIST completed (took 1 ms)
+  ''';
+
+      // Parse the IMAP folders from the response
+      final folders = parseImapFolders(imapResponse);
+
+      // Print the folders
+      for (var folder in folders) {
+        print(folder);
+      }
     });
   });
 }

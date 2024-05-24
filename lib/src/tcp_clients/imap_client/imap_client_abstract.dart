@@ -1,9 +1,11 @@
 import 'dart:async';
 
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/folder.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/mailbox.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response/capability_response.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response/response.dart';
 
+/// Abstract class representing the interface for an IMAP client.
 abstract class ImapClientAbstract {
   /// Connects to the IMAP server.
   ///
@@ -26,7 +28,7 @@ abstract class ImapClientAbstract {
   /// For more information, see the IMAP protocol specification:
   /// [RFC 3501 - INTERNET MESSAGE ACCESS PROTOCOL - VERSION 4rev1](https://datatracker.ietf.org/doc/html/rfc3501#section-6.1.1)
   ///
-  /// Returns a [List<String>] object representing the server's response.
+  /// Returns a [CapabilityResponse] object representing the server's response.
   Future<CapabilityResponse> capability();
 
   /// Logs in to the IMAP server using the `LOGIN` command as per the IMAP4rev1 protocol.
@@ -52,21 +54,62 @@ abstract class ImapClientAbstract {
   /// ImapClientAbstract client = ImapClientAbstract();
   /// client.selectMailbox(mailbox: 'inbox');
   /// ```
+  ///
+  /// Returns a [Response<Mailbox>] representing the selected mailbox.
   Future<Response<Mailbox>> select({required String mailbox});
 
-  /// Generates the documentation for the command `CREATE` in the IMAP protocol.
+  /// Creates a new mailbox on the server using the `CREATE` command as per the IMAP4rev1 protocol.
   ///
   /// This command is used to create a new mailbox on the mail server.
   /// The mailbox name should be specified as an argument to the command.
   /// If the mailbox already exists, the server will return an error.
   ///
   /// Example usage:
-  /// ```
-  /// CREATE "inbox"
+  /// ```dart
+  /// await client.create(mailbox: 'new_mailbox');
   /// ```
   ///
-  /// For more information about the IMAP protocol, refer to the RFC 3501 specification.
+  /// For more information, see the IMAP protocol specification:
+  /// [RFC 3501 - INTERNET MESSAGE ACCESS PROTOCOL - VERSION 4rev1](https://datatracker.ietf.org/doc/html/rfc3501#section-6.3.3)
+  ///
+  /// Returns a [Response<void>] indicating the result of the create operation.
   Future<Response<void>> create({required String mailbox});
 
+  /// Fetches messages from the server.
+  ///
+  /// This method fetches messages from the currently selected mailbox.
+  /// The specific messages to be fetched and the details to be retrieved can be
+  /// specified by the command's parameters, though they are not detailed here.
+  ///
+  /// Example usage:
+  /// ```dart
+  /// await client.fetch();
+  /// ```
+  ///
+  /// For more information, see the IMAP protocol specification:
+  /// [RFC 3501 - INTERNET MESSAGE ACCESS PROTOCOL - VERSION 4rev1](https://datatracker.ietf.org/doc/html/rfc3501#section-6.4.5)
+  ///
+  /// Returns a [Future<void>] indicating the result of the fetch operation.
   Future<void> fetch();
+
+  /// Lists mailboxes on the server using the `LIST` command according to the IMAP4rev1 protocol.
+  ///
+  /// This method sends the `LIST` command to the IMAP server to retrieve a list of mailboxes.
+  /// It returns details of each mailbox including attributes, hierarchy delimiter, and name.
+  ///
+  /// Example usage:
+  /// ```dart
+  /// var response = await client.list(reference: '', name: '*');
+  /// print(response);
+  /// ```
+  ///
+  /// For more information, see the IMAP protocol specification:
+  /// [RFC 3501 - INTERNET MESSAGE ACCESS PROTOCOL - VERSION 4rev1](https://datatracker.ietf.org/doc/html/rfc3501#section-6.3.8)
+  ///
+  /// Parameters:
+  /// - `reference`: The reference name argument for the `LIST` command. It specifies the base for interpreting the mailbox name.
+  /// - `name`: The mailbox name argument for the `LIST` command. It can include wildcards to match multiple mailboxes.
+  ///
+  /// Returns a [Response<Folder>] containing the list of mailboxes.
+  Future<Response<List<Folder>>> list({String name = "", String pattern = ""});
 }

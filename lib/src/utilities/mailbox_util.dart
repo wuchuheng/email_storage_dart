@@ -26,11 +26,11 @@ class MailboxUtil {
 
     for (final String line in data) {
       if (line.contains('EXISTS')) {
-        exists = int.parse(line.split(' ')[1]);
+        exists = int.parse(line.split(' ')[0]);
         continue;
       }
       if (line.contains('RECENT')) {
-        recent = int.parse(line.split(' ')[1]);
+        recent = int.parse(line.split(' ')[0]);
         continue;
       }
       if (line.contains('UIDVALIDITY')) {
