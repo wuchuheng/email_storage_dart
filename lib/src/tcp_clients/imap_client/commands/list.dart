@@ -1,4 +1,3 @@
-
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/command_abstract.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/command.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/folder.dart';
@@ -20,7 +19,7 @@ class ListCommand implements CommandAbstract<List<Folder>> {
   }) : _onWrite = onWrite;
 
   @override
-  Future<CommandAbstract> fetch() async {
+  Future<CommandAbstract> execute() async {
     // 1. Create the request of the command `LIST`
     final request = Request(
       command: Command.LIST,

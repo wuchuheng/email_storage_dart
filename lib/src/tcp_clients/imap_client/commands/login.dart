@@ -21,7 +21,7 @@ class Login implements CommandAbstract {
   late Request _request;
 
   @override
-  Future<CommandAbstract> fetch() async {
+  Future<CommandAbstract> execute() async {
     // 1. Create the request for the login command.
     _request = Request(
       command: Command.LOGIN,

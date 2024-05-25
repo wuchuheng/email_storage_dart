@@ -1,5 +1,6 @@
 @Timeout(Duration(seconds: 100))
 import 'package:test/test.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/folder.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/imap_client.dart';
 
 import 'integration_test/env.dart';
@@ -35,6 +36,26 @@ void main() {
     });
     test('Test the `SELECT` command.', () async {
       await imapClient.select(mailbox: 'INBOX');
+    });
+    late final List<Folder> folders;
+    test('Test the `LIST` command.', () async {
+      final result = await imapClient.list(pattern: '*', name: '');
+      folders = result.data;
+    });
+    const testMailboxName = 'test';
+    test('Test the `CREATE` command.', () async {
+      final isCreatedMailbox =
+          folders.indexWhere((el) => el.name == testMailboxName) != -1;
+      // If the mailbox is created, delete it.
+      if (isCreatedMailbox) {
+        await imapClient.delete(mailbox: testMailboxName);
+      }
+
+      await imapClient.create(mailbox: testMailboxName);
+    });
+
+    test('Test the command `DELETE`', () async {
+      await imapClient.delete(mailbox: testMailboxName);
     });
   });
 }

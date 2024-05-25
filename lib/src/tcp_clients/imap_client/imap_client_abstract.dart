@@ -112,4 +112,23 @@ abstract class ImapClientAbstract {
   ///
   /// Returns a [Response<Folder>] containing the list of mailboxes.
   Future<Response<List<Folder>>> list({String name = "", String pattern = ""});
+
+  /// Deletes a mailbox.
+  ///
+  /// This method sends the `DELETE` command to the server to delete the specified mailbox.
+  ///
+  /// Example usage:
+  /// ```dart
+  /// var response = await client.delete(mailbox: 'INBOX.Trash');
+  /// print(response);
+  /// ```
+  ///
+  /// For more information, see the IMAP protocol specification:
+  /// [RFC 3501 - INTERNET MESSAGE ACCESS PROTOCOL - VERSION 4rev1](https://datatracker.ietf.org/doc/html/rfc3501#section-6.3.4)
+  ///
+  /// Parameters:
+  /// - `mailbox`: The name of the mailbox to delete.
+  ///
+  /// Returns a [Response] indicating the success or failure of the operation.
+  Future<Response<void>> delete({required String mailbox});
 }

@@ -5,29 +5,31 @@ import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/imap_client.
 
 import '../dto/request/request.dart';
 
-class Create implements CommandAbstract {
+class Create implements CommandAbstract<void> {
   final String mailbox;
   final OnImapWriteType _write;
+  late Response<List<String>> _response;
 
   Create({required this.mailbox, required OnImapWriteType write})
       : _write = write;
 
   @override
-  Future<CommandAbstract> fetch() async {
+  Future<CommandAbstract> execute() async {
     final request = Request(command: Command.CREATE, arguments: [mailbox]);
-    await _write(request: request);
+    _response = await _write(request: request);
 
     return this;
   }
 
   @override
   Response<void> parse() {
-    // TODO: implement parse
-    throw UnimplementedError();
-  }
+    final Response<void> result = Response(
+      tag: _response.tag,
+      status: _response.status,
+      message: _response.message,
+      data: null,
+    );
 
-  CommandAbstract validate() {
-    // TODO: implement validate
-    throw UnimplementedError();
+    return result;
   }
 }

@@ -5,6 +5,7 @@ import 'dart:io';
 import 'package:wuchuheng_email_storage/src/config/config.dart';
 import 'package:wuchuheng_email_storage/src/exceptions/imap_response_exception.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/create.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/delete_command.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/list.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/login.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/current_execute_command.dart';
@@ -163,7 +164,7 @@ class ImapClient implements ImapClientAbstract {
       username: username,
       password: password,
       writeCommand: _write,
-    ).fetch();
+    ).execute();
 
     // 2.1 Set the login status to true.
     _isLogin = true;
@@ -188,7 +189,7 @@ class ImapClient implements ImapClientAbstract {
     );
 
     // 2. Fetch the select command.
-    await selectCommand.fetch();
+    await selectCommand.execute();
 
     // 3. Parse the response.
     final Response<Mailbox> response = selectCommand.parse();
@@ -205,14 +206,15 @@ class ImapClient implements ImapClientAbstract {
     LoginStatusValidator(isLogin: _isLogin).validate();
 
     // 2. Execute the create command.
-    final createCommand = await Create(mailbox: mailbox, write: _write).fetch();
+    final createCommand =
+        await Create(mailbox: mailbox, write: _write).execute();
 
     // 3. Parse the response.
-    createCommand.parse();
+    final result = createCommand.parse();
 
     // 4. Return the result.
 
-    throw UnimplementedError('');
+    return result;
   }
 
   @override
@@ -244,11 +246,27 @@ class ImapClient implements ImapClientAbstract {
     );
 
     // 3. Fetch the list command.
-    await listCommand.fetch();
+    await listCommand.execute();
     // 4. Parse the response.
     final Response<List<Folder>> result = listCommand.parse();
 
     // 5. Return the response.
+    return result;
+  }
+
+  @override
+  Future<Response<void>> delete({required String mailbox}) async {
+    // 1. Check if the client status is ready for the command.
+    LoginStatusValidator(isLogin: _isLogin).validate();
+
+    // 2. Execute the  `delete` command.
+    DeleteCommand deleteCommand = DeleteCommand(
+      mailbox: mailbox,
+      onImapWrite: _write,
+    );
+    await deleteCommand.execute();
+    final result = deleteCommand.parse();
+
     return result;
   }
 }

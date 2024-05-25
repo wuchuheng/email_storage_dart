@@ -18,7 +18,7 @@ class Select<T> implements CommandAbstract {
   Select({required this.mailbox, required this.socketWrite});
 
   @override
-  Future<CommandAbstract> fetch() async {
+  Future<CommandAbstract> execute() async {
     // 1. Create a request message to select the mailbox with the given name.
     _request = Request(command: Command.SELECT, arguments: [mailbox]);
 
