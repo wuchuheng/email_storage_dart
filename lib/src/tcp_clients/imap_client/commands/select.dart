@@ -7,7 +7,7 @@ import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/imap_client.
 
 import '../../../utilities/mailbox_util.dart';
 
-class Select<T> implements CommandAbstract {
+class Select<T> implements CommandAbstract<Mailbox> {
   final String mailbox;
   late Response<List<String>> _response;
 
@@ -18,17 +18,16 @@ class Select<T> implements CommandAbstract {
   Select({required this.mailbox, required this.socketWrite});
 
   @override
-  Future<CommandAbstract> execute() async {
+  Future<Response<Mailbox>> execute() async {
     // 1. Create a request message to select the mailbox with the given name.
     _request = Request(command: Command.SELECT, arguments: [mailbox]);
 
     // 2. Write the request message to the server with the socket write function.
     _response = await socketWrite(request: _request);
 
-    return this;
+    return parse();
   }
 
-  @override
   Response<Mailbox> parse() {
     final Mailbox mailbox = MailboxUtil.parseResponseToMailbox(_response.data);
     final Response<Mailbox> result = Response(

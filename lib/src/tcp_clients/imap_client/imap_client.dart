@@ -160,7 +160,7 @@ class ImapClient implements ImapClientAbstract {
     LoginValidator(password: password, username: username).validate();
 
     // 2. Login to the server.
-    final loginCommand = await Login(
+    final result = await Login(
       username: username,
       password: password,
       writeCommand: _write,
@@ -168,9 +168,6 @@ class ImapClient implements ImapClientAbstract {
 
     // 2.1 Set the login status to true.
     _isLogin = true;
-
-    // 3. Return the result.
-    final result = loginCommand.parse();
 
     return result;
   }
@@ -206,13 +203,12 @@ class ImapClient implements ImapClientAbstract {
     LoginStatusValidator(isLogin: _isLogin).validate();
 
     // 2. Execute the create command.
-    final createCommand =
-        await Create(mailbox: mailbox, write: _write).execute();
+    final result = await Create(
+      mailbox: mailbox,
+      write: _write,
+    ).execute();
 
-    // 3. Parse the response.
-    final result = createCommand.parse();
-
-    // 4. Return the result.
+    // 3. Return the result.
 
     return result;
   }
@@ -264,8 +260,7 @@ class ImapClient implements ImapClientAbstract {
       mailbox: mailbox,
       onImapWrite: _write,
     );
-    await deleteCommand.execute();
-    final result = deleteCommand.parse();
+    final result = await deleteCommand.execute();
 
     return result;
   }

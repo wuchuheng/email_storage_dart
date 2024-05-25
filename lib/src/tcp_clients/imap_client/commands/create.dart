@@ -8,28 +8,15 @@ import '../dto/request/request.dart';
 class Create implements CommandAbstract<void> {
   final String mailbox;
   final OnImapWriteType _write;
-  late Response<List<String>> _response;
 
   Create({required this.mailbox, required OnImapWriteType write})
       : _write = write;
 
   @override
-  Future<CommandAbstract> execute() async {
+  Future<Response<void>> execute() async {
     final request = Request(command: Command.CREATE, arguments: [mailbox]);
-    _response = await _write(request: request);
+    final response = await _write(request: request);
 
-    return this;
-  }
-
-  @override
-  Response<void> parse() {
-    final Response<void> result = Response(
-      tag: _response.tag,
-      status: _response.status,
-      message: _response.message,
-      data: null,
-    );
-
-    return result;
+    return response;
   }
 }

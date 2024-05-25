@@ -19,7 +19,7 @@ class ListCommand implements CommandAbstract<List<Folder>> {
   }) : _onWrite = onWrite;
 
   @override
-  Future<CommandAbstract> execute() async {
+  Future<Response<List<Folder>>> execute() async {
     // 1. Create the request of the command `LIST`
     final request = Request(
       command: Command.LIST,
@@ -30,7 +30,7 @@ class ListCommand implements CommandAbstract<List<Folder>> {
     _response = await _onWrite(request: request);
 
     // 3. return this.
-    return this;
+    return parse();
   }
 
   List<Folder> _parseImapFolders(List<String> lines, {String delimiter = "/"}) {
@@ -58,8 +58,6 @@ class ListCommand implements CommandAbstract<List<Folder>> {
     return folderList;
   }
 
-  //
-  @override
   Response<List<Folder>> parse() {
     final List<Folder> folders = _parseImapFolders(
       _response.data,

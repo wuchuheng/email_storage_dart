@@ -1,12 +1,11 @@
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/request/request.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response/response.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/imap_client.dart';
-import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/validator/common_validator.dart';
 
 import '../dto/command.dart';
 import 'command_abstract.dart';
 
-class Login implements CommandAbstract {
+class Login implements CommandAbstract<void> {
   final String username;
   final String password;
   final OnImapWriteType writeCommand;
@@ -21,7 +20,7 @@ class Login implements CommandAbstract {
   late Request _request;
 
   @override
-  Future<CommandAbstract> execute() async {
+  Future<Response<void>> execute() async {
     // 1. Create the request for the login command.
     _request = Request(
       command: Command.LOGIN,
@@ -31,17 +30,6 @@ class Login implements CommandAbstract {
     // 2. Write the request to the server.
     _response = await writeCommand(request: _request);
 
-    return this;
-  }
-
-  @override
-  Response parse() {
     return _response;
-  }
-
-  CommandAbstract validate() {
-    checkResponseFormat(_response.data, _request.tag);
-
-    return this;
   }
 }

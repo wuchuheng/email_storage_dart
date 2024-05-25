@@ -7,12 +7,11 @@ import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/imap_client.
 class DeleteCommand implements CommandAbstract<void> {
   final String mailbox;
   final OnImapWriteType onImapWrite;
-  late final Response<List<String>> _response;
 
   DeleteCommand({required this.mailbox, required this.onImapWrite});
 
   @override
-  Future<CommandAbstract> execute() async {
+  Future<Response<void>> execute() async {
     // 1. Create the request.
     final Request request = Request(
       command: Command.DELETE,
@@ -20,14 +19,9 @@ class DeleteCommand implements CommandAbstract<void> {
     );
 
     // 2. Send the request to the server.
-    _response = await onImapWrite(request: request);
+    final result = await onImapWrite(request: request);
 
-    // 3. return this.
-    return this;
-  }
-
-  @override
-  Response<void> parse() {
-    return _response;
+    // 3. return result.
+    return result;
   }
 }
