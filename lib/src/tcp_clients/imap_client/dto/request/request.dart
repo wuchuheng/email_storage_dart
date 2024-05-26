@@ -19,6 +19,8 @@ class Request {
     this.arguments = const [],
     this.continueInput = '',
   }) {
+    assert(command == Command.APPEND ? continueInput.isNotEmpty : true);
+
     //1. Generate a new tag for the request.
     // 1.1 Get the tag prefix from the command.
     final String tagPrefix = command.toString().split('.').last.substring(0, 1);

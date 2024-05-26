@@ -4,12 +4,14 @@ import 'dart:io';
 
 import 'package:wuchuheng_email_storage/src/config/config.dart';
 import 'package:wuchuheng_email_storage/src/exceptions/imap_response_exception.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/append.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/create.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/delete_command.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/list.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/login.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/current_execute_command.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/folder.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/mail.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/mailbox.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/request/request.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response/capability_response.dart';
@@ -36,9 +38,10 @@ class ImapClient implements ImapClientAbstract {
   final Duration timeout;
   late SecureSocket _socket;
   bool _isLogin = false;
+  late Unsubscribe _onDataSubscription;
 
   /// The register to omit the data from the server to the subscriber with the callback.
-  final Hook<String> _dataRegister = Hook<String>('');
+  final Hook<String> _onServerDataSubscription = Hook<String>('');
 
   ImapClient({
     required this.host,
@@ -55,7 +58,7 @@ class ImapClient implements ImapClientAbstract {
   @override
   Future<void> connect() async {
     // 1. Print the log when the comming data from the server.
-    _dataRegister.subscribe((response, _) {
+    _onServerDataSubscription.subscribe((response, _) {
       log(
         response.substring(0, response.length - 2),
         level: LogLevel.TCP_COMING,
@@ -66,11 +69,11 @@ class ImapClient implements ImapClientAbstract {
     _socket = await connect_service.connect(
       host: host,
       timeout: timeout,
-      dataRegister: _dataRegister,
+      dataRegister: _onServerDataSubscription,
     );
 
     // 3. Bind the data handler to the socket.
-    _dataRegister.subscribe((data, _) {
+    _onDataSubscription = _onServerDataSubscription.subscribe((data, _) {
       _onData(data);
     });
   }
@@ -96,8 +99,7 @@ class ImapClient implements ImapClientAbstract {
         // 2.2.1 Check if the tag from the server is the same as the tag from the client.
         // And then complete the completer.
         if (tagFromServer == tag) {
-          _currentExecuteCommand?.timer.cancel();
-          _currentExecuteCommand?.completer.complete(_flush);
+          _completeCurrentCommand(response: _flush);
           _flush = [];
         }
       }
@@ -107,10 +109,12 @@ class ImapClient implements ImapClientAbstract {
   /// Define the completer to wait the current command response from the server
   CurrentExecuteCommand? _currentExecuteCommand;
 
-  /// handle the data write to the server by the socket.
-  ///
-  // ignore: prefer_function_declarations_over_variables
-  late final OnImapWriteType _write = ({required Request request}) async {
+  void _completeCurrentCommand({required List<String> response}) {
+    _currentExecuteCommand?.timer.cancel();
+    _currentExecuteCommand?.completer.complete(_flush);
+  }
+
+  Future<void> _setExecuteCommand({required Request request}) async {
     // 1. Wait the previous command response from the server finished.
     if (_currentExecuteCommand?.completer.isCompleted == false) {
       await _currentExecuteCommand!.completer.future;
@@ -129,11 +133,33 @@ class ImapClient implements ImapClientAbstract {
       completer: Completer(),
       timer: timer,
     );
+  }
+
+  /// Handles the TCP write event to the IMAP server.
+  ///
+  /// This method is called when the client sends a message to the IMAP server.
+  /// The message is logged and then written to the socket.
+  ///
+  /// Parameter:
+  /// - `message`: The message string to be sent to the IMAP server.
+  void _onTcpWrite(String message) {
+    // 1. Log the message.
+    log(message.substring(0, message.length - 2), level: LogLevel.TCP_OUTGOING);
+
+    // 2. Write the message to the server.
+    _socket.write(message);
+  }
+
+  /// handle the data write to the server by the socket.
+  ///
+  // ignore: prefer_function_declarations_over_variables
+  late final OnImapWriteType _write = ({required Request request}) async {
+    // 1. Set the current execute command.
+    await _setExecuteCommand(request: request);
 
     // 3. write the request to the server.
     final message = request.toString();
-    log(message.substring(0, message.length - 2), level: LogLevel.TCP_OUTGOING);
-    _socket.write(message);
+    _onTcpWrite(message);
 
     // 4. Validate the response format is correct.
     final List<String> response =
@@ -261,6 +287,33 @@ class ImapClient implements ImapClientAbstract {
       onImapWrite: _write,
     );
     final result = await deleteCommand.execute();
+
+    return result;
+  }
+
+  @override
+  Future<Response<void>> append(
+      {required String mailbox, required Mail mail}) async {
+    // 1. Check if the client status is ready for the command.
+    LoginStatusValidator(isLogin: _isLogin).validate();
+
+    // 2. Cancel the `onData` subscription.
+    _onDataSubscription.unsubscribe();
+
+    // 3. Execute the `append` command.
+    final result = await Append(
+      mail: mail,
+      mailbox: mailbox,
+      onServerDataSubscription: _onServerDataSubscription,
+      setCurrentCommand: _setExecuteCommand,
+      completeCurrentCommand: _completeCurrentCommand,
+      onTcpWrite: _onTcpWrite,
+    ).execute();
+
+    // 4. Rebind the `onData` subscription.
+    _onDataSubscription = _onServerDataSubscription.subscribe(
+      (data, _) => _onData(data),
+    );
 
     return result;
   }

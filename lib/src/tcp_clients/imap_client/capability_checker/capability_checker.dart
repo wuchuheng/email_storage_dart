@@ -370,7 +370,7 @@ class Imap4CapabilityChecker implements Imap4CapabilityCheckerAbstract {
   @override
   Future<void> checkAppendCommand({required String body}) async {
     // 1. Generate the mail content.
-    final mail = MailBuild(
+    final mail = Mail(
       subject: 'Test mail',
       from: Address(address: username),
       body: body,

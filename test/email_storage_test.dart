@@ -1,6 +1,8 @@
 @Timeout(Duration(seconds: 100))
 import 'package:test/test.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/address.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/folder.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/mail.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/imap_client.dart';
 
 import 'integration_test/env.dart';
@@ -56,6 +58,15 @@ void main() {
 
     test('Test the command `DELETE`', () async {
       await imapClient.delete(mailbox: testMailboxName);
+    });
+
+    test('Test the `APPEND` command.', () async {
+      final Mail mail = Mail(
+        subject: 'hello',
+        from: Address(name: 'Wu', address: account.username),
+        body: 'Boday',
+      );
+      await imapClient.append(mailbox: 'INBOX', mail: mail);
     });
   });
 }

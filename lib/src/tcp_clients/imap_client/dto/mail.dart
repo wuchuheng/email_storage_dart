@@ -3,7 +3,7 @@ import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/address.
 import '../../../config/config.dart';
 
 /// Define the mail structure for the IMAP client.
-class MailBuild {
+class Mail {
   final String subject;
   final Address from;
   final String body;
@@ -14,7 +14,7 @@ class MailBuild {
     'Content-Type': 'text/plain; charset=us-ascii'
   };
 
-  MailBuild({
+  Mail({
     required this.subject,
     required this.from,
     required this.body,
@@ -51,7 +51,8 @@ class MailBuild {
       'Thu',
       'Fri',
       'Sat',
-    ][dateTime.weekday];
+    ][dateTime.weekday % 7];
+
     final month = [
       'Jan',
       'Feb',
@@ -90,6 +91,9 @@ class MailBuild {
     buffer.write(body);
     return buffer.toString();
   }
+
+  @override
+  toString() => fullMail;
 
   /// Get the size of the mail.
   int size() => fullMail.length;
