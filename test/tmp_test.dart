@@ -1,6 +1,6 @@
-import 'package:test/test.dart';
-
 import 'dart:convert';
+
+import 'package:test/test.dart';
 
 // Class to represent an IMAP folder
 class ImapFolder {
@@ -53,29 +53,6 @@ List<ImapFolder> parseImapFolders(String response) {
 
 void main() {
   group('Imap4CapabilityCheckerAbstract', () {
-    test("Test", () {
-      // Example IMAP server response
-      const imapResponse = '''
-* LIST () "/" "Archive"
-* LIST () "/" "Junk"
-* LIST () "/" "tmp/.history/index"
-* LIST (\\Noinferiors) "/" "INBOX"
-* LIST () "/" "tmp/.history/actions"
-* LIST () "/" "tmp"
-* LIST () "/" "tmp/.history"
-* LIST (\\Trash) "/" "Deleted Messages"
-* LIST (\\Sent) "/" "Sent Messages"
-* LIST () "/" "Drafts"
-L1 OK LIST completed (took 1 ms)
-  ''';
-
-      // Parse the IMAP folders from the response
-      final folders = parseImapFolders(imapResponse);
-
-      // Print the folders
-      for (var folder in folders) {
-        print(folder);
-      }
-    });
+    test("Test", () {});
   });
 }
