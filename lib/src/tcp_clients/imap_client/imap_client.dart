@@ -7,6 +7,7 @@ import 'package:wuchuheng_email_storage/src/exceptions/imap_response_exception.d
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/append.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/create.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/delete_command.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/fetch.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/list.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/login.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/current_execute_command.dart';
@@ -15,6 +16,7 @@ import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/mail.dar
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/mailbox.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/request/request.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response/capability_response.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response/message.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response/response.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/imap_client_abstract.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/validator/login_status_validator.dart';
@@ -26,6 +28,7 @@ import 'package:wuchuheng_hooks/wuchuheng_hooks.dart';
 import 'commands/connect.dart' as connect_service;
 import 'commands/capability.dart' as capability_service;
 import 'commands/select.dart';
+import 'dto/command.dart';
 
 typedef OnImapWriteType = Future<Response<List<String>>> Function({
   required Request request,
@@ -41,7 +44,7 @@ class ImapClient implements ImapClientAbstract {
   late Unsubscribe _onDataSubscription;
 
   /// The register to omit the data from the server to the subscriber with the callback.
-  final Hook<String> _onServerDataSubscription = Hook<String>('');
+  final Hook<String> _tcpDataSubscription = Hook<String>('');
 
   ImapClient({
     required this.host,
@@ -58,7 +61,7 @@ class ImapClient implements ImapClientAbstract {
   @override
   Future<void> connect() async {
     // 1. Print the log when the comming data from the server.
-    _onServerDataSubscription.subscribe((response, _) {
+    _tcpDataSubscription.subscribe((response, _) {
       log(
         response.substring(0, response.length - 2),
         level: LogLevel.TCP_COMING,
@@ -69,11 +72,11 @@ class ImapClient implements ImapClientAbstract {
     _socket = await connect_service.connect(
       host: host,
       timeout: timeout,
-      dataRegister: _onServerDataSubscription,
+      dataRegister: _tcpDataSubscription,
     );
 
     // 3. Bind the data handler to the socket.
-    _onDataSubscription = _onServerDataSubscription.subscribe((data, _) {
+    _onDataSubscription = _tcpDataSubscription.subscribe((data, _) {
       _onData(data);
     });
   }
@@ -240,7 +243,11 @@ class ImapClient implements ImapClientAbstract {
   }
 
   @override
-  Future<void> fetch() {
+  Future<Response<List<Message>>> fetch({
+    required List<String> dataItems,
+    int? endSequenceNumber,
+    required int startSequenceNumber,
+  }) async {
     // 1. Check if the client is already logged in.
     LoginStatusValidator(isLogin: _isLogin).validate();
     // 2. Check if the selected mailbox is not null.
@@ -248,8 +255,31 @@ class ImapClient implements ImapClientAbstract {
       throw ResponseException('No mailbox is selected.');
     }
 
-    // TODO: implement fetch
-    throw UnimplementedError();
+    // 3.Perform the precedent of the `FETCH` command.
+    // 3.1 Unbind the right to receive data from the server.
+    // Because the right to process the data needs to be transferred to this class
+    _onDataSubscription.unsubscribe();
+    // 3.2 Block the other command to execute when the current command is executing.
+    await _setExecuteCommand(request: Request(command: Command.FETCH));
+
+    // 4. Execute the fetch command.
+    final res = await Fetch(
+      dataItems: dataItems,
+      tcpDataSubscription: _tcpDataSubscription,
+      endSequenceNumber: endSequenceNumber,
+      startSequenceNumber: startSequenceNumber,
+      tcpWrite: _onTcpWrite,
+    ).execute();
+
+    // 5.Perform the postcedent of the `FETCH` command.
+    // 5.1 Unblock the other command to execute.
+    _completeCurrentCommand(response: []);
+    // 5.2 Rebind the `onData` subscription.
+    _onDataSubscription = _tcpDataSubscription.subscribe(
+      (data, _) => _onData(data),
+    );
+
+    return res;
   }
 
   @override
@@ -292,26 +322,38 @@ class ImapClient implements ImapClientAbstract {
   }
 
   @override
-  Future<Response<void>> append(
-      {required String mailbox, required Mail mail}) async {
+  Future<Response<void>> append({
+    required String mailbox,
+    required Mail mail,
+  }) async {
     // 1. Check if the client status is ready for the command.
     LoginStatusValidator(isLogin: _isLogin).validate();
 
-    // 2. Cancel the `onData` subscription.
+    // 2. Perform the precedent of the `APPEND` command.
+    // 2.1 Cancel the `onData` subscription.
     _onDataSubscription.unsubscribe();
+
+    // 2.2 Block the other command to execute when the current command is executing.
+    await _setExecuteCommand(
+        request: Request(
+      command: Command.APPEND,
+      continueInput: mailbox.toString(),
+    ));
 
     // 3. Execute the `append` command.
     final result = await Append(
       mail: mail,
       mailbox: mailbox,
-      onServerDataSubscription: _onServerDataSubscription,
-      setCurrentCommand: _setExecuteCommand,
-      completeCurrentCommand: _completeCurrentCommand,
+      onServerDataSubscription: _tcpDataSubscription,
       onTcpWrite: _onTcpWrite,
     ).execute();
 
-    // 4. Rebind the `onData` subscription.
-    _onDataSubscription = _onServerDataSubscription.subscribe(
+    // 4. Perform the postcedent of the `APPEND` command.
+    // 4.1 Unblock the other command to execute.
+    _completeCurrentCommand(response: []);
+
+    // 4.2 Rebind the `onData` subscription.
+    _onDataSubscription = _tcpDataSubscription.subscribe(
       (data, _) => _onData(data),
     );
 

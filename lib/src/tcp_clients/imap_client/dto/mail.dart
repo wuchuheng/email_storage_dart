@@ -97,4 +97,29 @@ class Mail {
 
   /// Get the size of the mail.
   int size() => fullMail.length;
+
+  static String wrapLines(String input, {int lineLength = 78}) {
+    final buffer = StringBuffer();
+    int start = 0;
+
+    while (start < input.length) {
+      int end = start + lineLength;
+      if (end >= input.length) {
+        buffer.write(input.substring(start));
+        break;
+      }
+
+      // Find a suitable breakpoint
+      int breakpoint = input.lastIndexOf(' ', end);
+      if (breakpoint <= start) {
+        // If no breakpoint found, force a break
+        breakpoint = end;
+      }
+
+      buffer.writeln(input.substring(start, breakpoint).trim());
+      start = breakpoint + 1; // Skip the space or go to the next segment
+    }
+
+    return buffer.toString();
+  }
 }

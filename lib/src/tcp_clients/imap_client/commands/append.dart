@@ -16,8 +16,6 @@ class Append implements CommandAbstract<void> {
   final Hook<String> onServerDataSubscription;
   final String mailbox;
   final Mail mail;
-  final Future<void> Function({required Request request}) setCurrentCommand;
-  final void Function({required List<String> response}) completeCurrentCommand;
   final void Function(String message) onTcpWrite;
   late Request _request;
 
@@ -25,11 +23,10 @@ class Append implements CommandAbstract<void> {
     required this.onServerDataSubscription,
     required this.mailbox,
     required this.mail,
-    required this.setCurrentCommand,
-    required this.completeCurrentCommand,
     required this.onTcpWrite,
   });
 
+  /// helloc
   /// Declare a response object to store the response from the server.
   final Completer<Response<List<String>>> _completerResponse = Completer();
 
@@ -46,22 +43,17 @@ class Append implements CommandAbstract<void> {
       continueInput: mail.toString(),
     );
 
-    // 3. Set the current command `APPEND` being executed.
-    setCurrentCommand(request: _request);
-
-    // 4. Send the request to the server.
+    // 3. Send the request to the server.
     onTcpWrite(_request.toString());
 
-    // 5. Wait for the response from the server.
+    // 4. Wait for the response from the server.
     final Response<List<String>> result = await _completerResponse.future;
 
-    // 6. Restore the state of the IMAP client.
-    // 6.1　Unsubscribe from the data event from the IMAP Server.
+    // 5. Restore the state of the IMAP client.
+    // 5.1　Unsubscribe from the data event from the IMAP Server.
     dataSubscription.unsubscribe();
-    // 6.2 Set the current command `APPEND` being completed.
-    completeCurrentCommand(response: result.data);
 
-    // 7. Return the response from the server.
+    // 6. Return the response from the server.
     return result;
   }
 

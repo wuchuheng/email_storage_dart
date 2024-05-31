@@ -4,6 +4,7 @@ import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/folder.d
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/mail.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/mailbox.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response/capability_response.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response/message.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response/response.dart';
 
 /// Abstract class representing the interface for an IMAP client.
@@ -80,18 +81,30 @@ abstract class ImapClientAbstract {
   ///
   /// This method fetches messages from the currently selected mailbox.
   /// The specific messages to be fetched and the details to be retrieved can be
-  /// specified by the command's parameters, though they are not detailed here.
+  /// specified by the command's parameters.
   ///
   /// Example usage:
   /// ```dart
-  /// await client.fetch();
+  /// await client.fetch(
+  ///   startSequenceNumber: 1,
+  ///   endSequenceNumber: 10,
+  ///   dataItems: ['BODY[TEXT]', 'BODY[HEADER.FIELDS (FROM TO SUBJECT DATE)]'],
+  /// );
   /// ```
   ///
   /// For more information, see the IMAP protocol specification:
   /// [RFC 3501 - INTERNET MESSAGE ACCESS PROTOCOL - VERSION 4rev1](https://datatracker.ietf.org/doc/html/rfc3501#section-6.4.5)
   ///
+  /// [startSequenceNumber] is the start sequence number of the messages to fetch.
+  /// [endSequenceNumber] is the end sequence number of the messages to fetch. If not provided, only the message with the start sequence number will be fetched.
+  /// [dataItems] is the list of data items to fetch. It can include 'BODY[TEXT]' for the body of the message, and 'BODY[HEADER.FIELDS (FROM TO SUBJECT DATE)]' for specific headers.
+  ///
   /// Returns a [Future<void>] indicating the result of the fetch operation.
-  Future<void> fetch();
+  Future<Response<List<Message>>> fetch({
+    required int startSequenceNumber,
+    int? endSequenceNumber,
+    required List<String> dataItems,
+  });
 
   /// Lists mailboxes on the server using the `LIST` command according to the IMAP4rev1 protocol.
   ///

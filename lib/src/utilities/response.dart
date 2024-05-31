@@ -42,10 +42,6 @@ class ResponseUtile {
     switch (status) {
       case 'OK':
         return ResponseStatus.OK;
-      case 'NO':
-        return ResponseStatus.NO;
-      case 'BAD':
-        return ResponseStatus.BAD;
       default:
         throw ResponseException('The status is not supported: $status.');
     }
@@ -114,7 +110,8 @@ class ResponseUtile {
         return line;
       } else {
         throw ResponseException(
-            'The response is not started with the tag:$tag.');
+          'The response is not started with the tag:$tag.',
+        );
       }
     }).toList();
   }

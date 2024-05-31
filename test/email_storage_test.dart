@@ -3,6 +3,7 @@ import 'package:test/test.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/address.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/folder.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/mail.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/mailbox.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/imap_client.dart';
 
 import 'integration_test/env.dart';
@@ -36,8 +37,12 @@ void main() {
       final folders = await imapClient.list(pattern: '*', name: '');
       folders.data.first;
     });
+
+    late Mailbox selectedMailbox;
     test('Test the `SELECT` command.', () async {
-      await imapClient.select(mailbox: 'INBOX');
+      final res = await imapClient.select(mailbox: 'INBOX');
+      selectedMailbox = res.data;
+      selectedMailbox.exists;
     });
     late final List<Folder> folders;
     test('Test the `LIST` command.', () async {
@@ -64,9 +69,18 @@ void main() {
       final Mail mail = Mail(
         subject: 'hello',
         from: Address(name: 'Wu', address: account.username),
-        body: 'Boday',
+        body: """New email""",
       );
       await imapClient.append(mailbox: 'INBOX', mail: mail);
+    });
+
+    test('Test the `FETCH` command.', () async {
+      final res = await imapClient.fetch(
+        startSequenceNumber: 1,
+        endSequenceNumber: 2,
+        dataItems: ['BODY[TEXT]', 'BODY[HEADER.FIELDS (SUBJECT DATE)]'],
+      );
+      res.data;
     });
   });
 }
