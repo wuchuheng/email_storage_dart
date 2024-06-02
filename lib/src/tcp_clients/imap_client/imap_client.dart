@@ -245,7 +245,7 @@ class ImapClient implements ImapClientAbstract {
   @override
   Future<Response<List<Message>>> fetch({
     required List<String> dataItems,
-    int? endSequenceNumber,
+    String endSequenceNumber = "",
     required int startSequenceNumber,
   }) async {
     // 1. Check if the client is already logged in.

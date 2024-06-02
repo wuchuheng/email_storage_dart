@@ -102,7 +102,7 @@ abstract class ImapClientAbstract {
   /// Returns a [Future<void>] indicating the result of the fetch operation.
   Future<Response<List<Message>>> fetch({
     required int startSequenceNumber,
-    int? endSequenceNumber,
+    String endSequenceNumber,
     required List<String> dataItems,
   });
 

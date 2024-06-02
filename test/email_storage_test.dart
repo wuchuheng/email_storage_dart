@@ -77,7 +77,7 @@ void main() {
     test('Test the `FETCH` command.', () async {
       final res = await imapClient.fetch(
         startSequenceNumber: 1,
-        endSequenceNumber: 2,
+        endSequenceNumber: '2',
         dataItems: ['BODY[TEXT]', 'BODY[HEADER.FIELDS (SUBJECT DATE)]', 'UID'],
       );
       res.data;

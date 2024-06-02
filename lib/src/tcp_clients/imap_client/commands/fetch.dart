@@ -25,7 +25,7 @@ class Fetch implements CommandAbstract<List<Message>> {
   final int startSequenceNumber;
 
   /// The end sequence number of the messages to fetch.
-  final int? endSequenceNumber;
+  final String endSequenceNumber;
 
   /// The data items to fetch.
   final List<String> dataItems;
@@ -45,7 +45,7 @@ class Fetch implements CommandAbstract<List<Message>> {
   /// The [dataItems] argument is the list of data items to fetch.
   Fetch({
     required this.startSequenceNumber,
-    this.endSequenceNumber,
+    this.endSequenceNumber = "",
     required this.dataItems,
     required this.tcpDataSubscription,
     required this.tcpWrite,
@@ -53,6 +53,19 @@ class Fetch implements CommandAbstract<List<Message>> {
     // 1. Check the data items list.
     if (dataItems.isEmpty) {
       throw ResponseException('The data items list cannot be empty.');
+    }
+    // 1.1 Check if the end sequence number is a wildcard.
+    if (endSequenceNumber != "*") {
+      // Check the end sequence number must be a number.
+      if (int.tryParse(endSequenceNumber) == null) {
+        throw ResponseException('The end sequence number must be a number.');
+      }
+      // Check if the end sequence number is greater than the start sequence number.
+      if (int.parse(endSequenceNumber) < startSequenceNumber) {
+        throw ResponseException(
+          'The end sequence number must be greater than or equal to the start sequence number.',
+        );
+      }
     }
 
     // 2. Bind the ReceiveData hook to the method to receive data from the server over the socket.
@@ -78,7 +91,7 @@ class Fetch implements CommandAbstract<List<Message>> {
   @override
   Future<Response<List<Message>>> execute() async {
     // 1. Create a request object for the FETCH command.
-    final partNumber = endSequenceNumber != null
+    final partNumber = endSequenceNumber.isNotEmpty
         ? '$startSequenceNumber:$endSequenceNumber'
         : startSequenceNumber.toString();
     _request = Request(
@@ -182,10 +195,12 @@ class Fetch implements CommandAbstract<List<Message>> {
       if (fetchRegex.hasMatch(line)) {
         // 1.2.1 Remove the `* <sequence number> FETCH (` from the line.
         line = line.replaceFirst(fetchRegex, '');
-        final Message message =
-            _parseMessage(data.sublist(i), onReadNextLine: () {
-          i++;
-        });
+        final Message message = _parseMessage(
+          data.sublist(i),
+          onReadNextLine: () {
+            i++;
+          },
+        );
         result.add(message);
       }
 
