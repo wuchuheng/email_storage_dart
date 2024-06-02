@@ -82,5 +82,19 @@ void main() {
       );
       res.data;
     });
+
+    test('Test the `UID FETCH` command.', () async {
+      var res = await imapClient.uidFetch(
+        startUid: selectedMailbox.uidNext - 2,
+        dataItems: ['BODY[TEXT]', 'BODY[HEADER.FIELDS (SUBJECT DATE)]', 'UID'],
+      );
+      expect(res.data.length, 1);
+      res = await imapClient.uidFetch(
+        startUid: selectedMailbox.uidNext - 2,
+        endUid: '*',
+        dataItems: ['BODY[TEXT]', 'BODY[HEADER.FIELDS (SUBJECT DATE)]', 'UID'],
+      );
+      expect(res.data.length, 3);
+    });
   });
 }

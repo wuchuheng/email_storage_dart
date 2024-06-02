@@ -10,6 +10,7 @@ import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/del
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/fetch.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/list.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/login.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/uid_fetch.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/current_execute_command.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/folder.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/mail.dart';
@@ -335,10 +336,11 @@ class ImapClient implements ImapClientAbstract {
 
     // 2.2 Block the other command to execute when the current command is executing.
     await _setExecuteCommand(
-        request: Request(
-      command: Command.APPEND,
-      continueInput: mailbox.toString(),
-    ));
+      request: Request(
+        command: Command.APPEND,
+        continueInput: mailbox.toString(),
+      ),
+    );
 
     // 3. Execute the `append` command.
     final result = await Append(
@@ -361,11 +363,42 @@ class ImapClient implements ImapClientAbstract {
   }
 
   @override
-  Future<Response<List<int>>> uidFetch(
-      {required int startSequenceNumber,
-      int? endSequenceNumber,
-      required List<String> dataItems}) {
-    // TODO: implement uidFetch
-    throw UnimplementedError();
+  Future<Response<List<Message>>> uidFetch({
+    required int startUid,
+    String endUid = "",
+    required List<String> dataItems,
+  }) async {
+    // 1. Check if the client is already logged in.
+    LoginStatusValidator(isLogin: _isLogin).validate();
+    // 2. Check if the selected mailbox is not null.
+    if (_selectedMailbox == null) {
+      throw ResponseException('No mailbox is selected.');
+    }
+
+    // 3.Perform the precedent of the `FETCH` command.
+    // 3.1 Unbind the right to receive data from the server.
+    // Because the right to process the data needs to be transferred to this class
+    _onDataSubscription.unsubscribe();
+    // 3.2 Block the other command to execute when the current command is executing.
+    await _setExecuteCommand(request: Request(command: Command.FETCH));
+
+    // 4. Execute the fetch command.
+    final res = await UidFetch(
+      dataItems: dataItems,
+      tcpDataSubscription: _tcpDataSubscription,
+      endUid: endUid,
+      startUid: startUid,
+      tcpWrite: _onTcpWrite,
+    ).execute();
+
+    // 5.Perform the postcedent of the `FETCH` command.
+    // 5.1 Unblock the other command to execute.
+    _completeCurrentCommand(response: []);
+    // 5.2 Rebind the `onData` subscription.
+    _onDataSubscription = _tcpDataSubscription.subscribe(
+      (data, _) => _onData(data),
+    );
+
+    return res;
   }
 }

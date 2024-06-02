@@ -167,9 +167,20 @@ abstract class ImapClientAbstract {
   /// Returns a [Response] indicating the success or failure of the operation.
   Future<Response<void>> append({required String mailbox, required Mail mail});
 
-  Future<Response<List<int>>> uidFetch({
-    required int startSequenceNumber,
-    int? endSequenceNumber,
+  /// Executes the `UID FETCH` command of the IMAP protocol.
+  ///
+  /// The `UID FETCH` command fetches specific messages from a specified mailbox using their unique identifiers (UIDs).
+  /// This method is used when a client wants to retrieve specific messages from the mailbox.
+  ///
+  /// Parameters:
+  /// - `startSequenceNumber`: The sequence number of the first message to fetch.
+  /// - `endSequenceNumber`: The sequence number of the last message to fetch. If this is `null`, only the message with the `startSequenceNumber` will be fetched.
+  /// - `dataItems`: A list of data items to fetch for each message. This could include items like the message flags, internal date, UID, etc.
+  ///
+  /// Returns a [Response] containing a list of [Message] objects. Each [Message] object represents a message fetched from the server.
+  Future<Response<List<Message>>> uidFetch({
+    required int startUid,
+    String endUid = "",
     required List<String> dataItems,
   });
 }

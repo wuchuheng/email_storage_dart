@@ -45,4 +45,10 @@ enum Command {
   ///
   /// This command is used to ask the server to fetch one or more messages from a specified mailbox.
   FETCH, // ignore: constant_identifier_names
+
+  /// Fetches specific messages from a specified mailbox using their unique identifiers (UIDs).
+  ///
+  /// This command is used to ask the server to fetch specific messages from a specified mailbox using their UIDs.
+  /// This could be used when a client wants to retrieve specific messages from the mailbox.
+  UID, // ignore: constant_identifier_names
 }
