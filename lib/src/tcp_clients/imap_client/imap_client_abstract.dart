@@ -166,4 +166,10 @@ abstract class ImapClientAbstract {
   ///
   /// Returns a [Response] indicating the success or failure of the operation.
   Future<Response<void>> append({required String mailbox, required Mail mail});
+
+  Future<Response<List<int>>> uidFetch({
+    required int startSequenceNumber,
+    int? endSequenceNumber,
+    required List<String> dataItems,
+  });
 }

@@ -78,7 +78,7 @@ void main() {
       final res = await imapClient.fetch(
         startSequenceNumber: 1,
         endSequenceNumber: 2,
-        dataItems: ['BODY[TEXT]', 'BODY[HEADER.FIELDS (SUBJECT DATE)]'],
+        dataItems: ['BODY[TEXT]', 'BODY[HEADER.FIELDS (SUBJECT DATE)]', 'UID'],
       );
       res.data;
     });

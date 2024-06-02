@@ -182,10 +182,10 @@ class Fetch implements CommandAbstract<List<Message>> {
       if (fetchRegex.hasMatch(line)) {
         // 1.2.1 Remove the `* <sequence number> FETCH (` from the line.
         line = line.replaceFirst(fetchRegex, '');
-        final Message message = _parseMessage(
-          data.sublist(i),
-          onReadNextLine: (int index) => i = index + i,
-        );
+        final Message message =
+            _parseMessage(data.sublist(i), onReadNextLine: () {
+          i++;
+        });
         result.add(message);
       }
 
@@ -213,18 +213,41 @@ class Fetch implements CommandAbstract<List<Message>> {
   /// @Stack: constructor / _onData
   Message _parseMessage(
     List<String> data, {
-    required void Function(int index) onReadNextLine,
+    required void Function() onReadNextLine,
   }) {
     // 1. Extract the UID of the message.
-    final int uid = _extractUID(data.first);
+    final int sequenceNumber = _extractSequenceNumber(data.first);
 
     // 2. Remove the matched string in the first line.
     data[0] = data.first.replaceFirst(fetchRegex, '');
 
+    // The count of rest of the data items.
+    int dataItemsLength = dataItems.length;
+
+    final Message message = Message(
+      sequenceNumber: sequenceNumber,
+      dataItemMapResult: {},
+    );
+
+    // 3. If the UID was exisited in the query, and then extract the UID from the message.
+    final uidRegex = RegExp(r'UID \d+');
+    if (data.first.contains(uidRegex)) {
+      // 3.1 Extract the UID from the first line, and push it to the data items.
+      final match = uidRegex.firstMatch(data.first);
+      final matchStr = match?.group(0) as String;
+      final uid = int.parse(matchStr.split(' ')[1]);
+      message.dataItemMapResult['UID'] = uid.toString();
+
+      // 3.2 Remove the matched string from the first line.
+      data[0] = data.first.replaceFirst(uidRegex, '');
+
+      // 3.3 decrement the data items length.
+      dataItemsLength--;
+    }
+
     // 3. Extract the data items of the message.
-    final Message message = Message(uid: uid, dataItemMapResult: {});
     int nextLineIndex = 0;
-    for (int i = 0; i < dataItems.length; i++) {
+    for (int i = 0; i < dataItemsLength; i++) {
       // 3.1 Extract the data items from the list of string, like:
       // ```BODY[TEXT] {19}
       // line1
@@ -241,7 +264,7 @@ class Fetch implements CommandAbstract<List<Message>> {
       while (readedLength < length) {
         // 4.  Read the next line and call the `onReadNextLine` callback to get the index of the next line to read.
         nextLineIndex++;
-        onReadNextLine(nextLineIndex);
+        onReadNextLine();
 
         // 3.1.2.1  Add the next line to the value.
         final line = data[nextLineIndex] + EOF;
@@ -255,14 +278,14 @@ class Fetch implements CommandAbstract<List<Message>> {
       // 3.2 Check if the next data item is available and then increment the index.
       if (i + 1 < dataItems.length) {
         nextLineIndex++;
-        onReadNextLine(nextLineIndex);
+        onReadNextLine();
       }
     }
 
     return message;
   }
 
-  int _extractUID(String line) {
+  int _extractSequenceNumber(String line) {
     // 1. Extract the match from the line.
     final match = fetchRegex.firstMatch(line);
 

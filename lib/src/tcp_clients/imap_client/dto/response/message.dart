@@ -18,7 +18,7 @@ class Message {
   /// The unique sequence number (UID) of the message.
   ///
   /// This number is used to identify the message within the server response.
-  final int uid;
+  final int sequenceNumber;
 
   /// A map containing the data items extracted from the server response.
   ///
@@ -26,7 +26,7 @@ class Message {
   final Map<String, String> dataItemMapResult;
 
   Message({
-    required this.uid,
+    required this.sequenceNumber,
     required this.dataItemMapResult,
   });
 }

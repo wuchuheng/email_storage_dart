@@ -359,4 +359,13 @@ class ImapClient implements ImapClientAbstract {
 
     return result;
   }
+
+  @override
+  Future<Response<List<int>>> uidFetch(
+      {required int startSequenceNumber,
+      int? endSequenceNumber,
+      required List<String> dataItems}) {
+    // TODO: implement uidFetch
+    throw UnimplementedError();
+  }
 }
