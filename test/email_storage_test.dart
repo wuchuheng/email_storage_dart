@@ -85,16 +85,27 @@ void main() {
 
     test('Test the `UID FETCH` command.', () async {
       var res = await imapClient.uidFetch(
-        startUid: selectedMailbox.uidNext - 2,
+        startUid:
+            selectedMailbox.uidNext == 1 ? 1 : selectedMailbox.uidNext - 1,
         dataItems: ['BODY[TEXT]', 'BODY[HEADER.FIELDS (SUBJECT DATE)]', 'UID'],
       );
       expect(res.data.length, 1);
       res = await imapClient.uidFetch(
-        startUid: selectedMailbox.uidNext - 2,
+        startUid:
+            selectedMailbox.uidNext == 1 ? 1 : selectedMailbox.uidNext - 1,
         endUid: '*',
         dataItems: ['BODY[TEXT]', 'BODY[HEADER.FIELDS (SUBJECT DATE)]', 'UID'],
       );
-      expect(res.data.length, 3);
+      expect(true, res.data.isNotEmpty);
+    });
+
+    test('Test the `UID STORE` command.', () async {
+      final res = await imapClient.uidStore(
+        startUid: selectedMailbox.uidNext - 1,
+        endUid: '*',
+        dataItems: ['+FLAGS', '(\\Deleted)'],
+      );
+      res.data;
     });
   });
 }

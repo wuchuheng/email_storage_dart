@@ -11,6 +11,7 @@ import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/fet
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/list.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/login.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/uid_fetch.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/uid_store.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/current_execute_command.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/folder.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/mail.dart';
@@ -398,6 +399,22 @@ class ImapClient implements ImapClientAbstract {
     _onDataSubscription = _tcpDataSubscription.subscribe(
       (data, _) => _onData(data),
     );
+
+    return res;
+  }
+
+  @override
+  Future<Response<List<Message>>> uidStore({
+    required int startUid,
+    String endUid = "",
+    required List<String> dataItems,
+  }) async {
+    final res = await UidStore(
+      onWrite: _write,
+      startUid: startUid,
+      endUid: endUid,
+      dataItems: dataItems,
+    ).execute();
 
     return res;
   }

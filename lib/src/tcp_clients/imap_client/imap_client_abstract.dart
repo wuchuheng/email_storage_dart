@@ -183,4 +183,20 @@ abstract class ImapClientAbstract {
     String endUid = "",
     required List<String> dataItems,
   });
+
+  /// Executes the `UID STORE` command of the IMAP protocol.
+  ///
+  /// The `UID STORE` command alters data associated with a message in the mailbox.
+  ///
+  /// Parameters:
+  /// - `startUid`: The UID of the first message to alter.
+  /// - `endUid`: The UID of the last message to alter. If this is `""`, only the message with the `startUid` will be altered.
+  /// - `dataItems`: A list of data items to alter for each message. This could include items like the message flags, etc.
+  ///
+  /// Returns a [List] containing [Message] objects. Each [Message] object represents a message that has been altered on the server.
+  Future<Response<List<Message>>> uidStore({
+    required int startUid,
+    String endUid = "",
+    required List<String> dataItems,
+  });
 }
