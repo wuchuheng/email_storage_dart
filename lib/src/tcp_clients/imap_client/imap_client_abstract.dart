@@ -199,4 +199,18 @@ abstract class ImapClientAbstract {
     String endUid = "",
     required List<String> dataItems,
   });
+
+  /// Executes the `UID EXPUNGE` command of the IMAP protocol.
+  ///
+  /// The `UID EXPUNGE` command permanently removes all messages that have the \Deleted flag set from the mailbox.
+  ///
+  /// Parameters:
+  /// - `startUid`: The UID of the first message to expunge.
+  /// - `endUid`: The UID of the last message to expunge. If this is `""`, only the message with the `startUid` will be expunged.
+  ///
+  /// Returns a [Response] containing a list of [Message] objects. Each [Message] object represents a message that has been expunged from the server.
+  Future<Response<void>> uidExpunge({
+    required int startUid,
+    String endUid = "",
+  });
 }

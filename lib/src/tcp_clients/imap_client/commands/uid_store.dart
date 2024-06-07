@@ -32,6 +32,7 @@ class UidStore implements CommandAbstract<List<Message>> {
       }
     }
   }
+
   @override
   Future<Response<List<Message>>> execute() async {
     // 1. Create a request for the `UID STORE` command.

@@ -10,6 +10,7 @@ import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/del
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/fetch.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/list.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/login.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/uid_expunge.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/uid_fetch.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/commands/uid_store.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/current_execute_command.dart';
@@ -415,6 +416,22 @@ class ImapClient implements ImapClientAbstract {
       endUid: endUid,
       dataItems: dataItems,
     ).execute();
+
+    return res;
+  }
+
+  @override
+  Future<Response<void>> uidExpunge({
+    required int startUid,
+    String endUid = "",
+  }) async {
+    UidExpunge uidExpunge = UidExpunge(
+      onWrite: _write,
+      startUid: startUid,
+      endUid: endUid,
+    );
+
+    final res = await uidExpunge.execute();
 
     return res;
   }

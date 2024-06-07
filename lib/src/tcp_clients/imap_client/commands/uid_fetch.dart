@@ -1,6 +1,7 @@
 import 'dart:async';
 import 'dart:convert';
 
+import 'package:wuchuheng_email_storage/src/config/config.dart';
 import 'package:wuchuheng_email_storage/src/exceptions/imap_response_exception.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/command.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/request/request.dart';
@@ -9,7 +10,6 @@ import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response
 import 'package:wuchuheng_email_storage/src/utilities/response.dart';
 import 'package:wuchuheng_hooks/wuchuheng_hooks.dart';
 
-import '../../../config/config.dart';
 import 'command_abstract.dart';
 
 /// A class that implements the IMAP UID FETCH command.
@@ -186,112 +186,139 @@ class UidFetch implements CommandAbstract<List<Message>> {
   ///
   /// @Stack: construct / _onData
   List<Message> _parseResponse(List<String> data) {
-    final List<Message> result = [];
-    int i = 0;
-    while (i < data.length) {
-      String line = data[i];
-      // 1. If the message is matched, and then extract the message from the response data.
-      if (fetchRegex.hasMatch(line)) {
-        // 1.2.1 Remove the `* <sequence number> FETCH (` from the line.
-        line = line.replaceFirst(fetchRegex, '');
-        final Message message = _parseMessage(
-          data.sublist(i),
-          onReadNextLine: () {
-            i++;
-          },
-        );
-        result.add(message);
-      }
+    // 1. Split the response data into separate messages.
+    final sequenceNumberMapMessages = _splitMessages(data);
 
-      i++;
+    final List<Message> result = [];
+    // 2. Parse each message.
+    for (final sequenceNumber in sequenceNumberMapMessages.keys) {
+      final messages = sequenceNumberMapMessages[sequenceNumber]!;
+      final message = _parseMessage(
+        sequenceNumber,
+        messages,
+      );
+
+      // 2.2 Add the message to the result list.
+      result.add(message);
     }
 
     return result;
   }
 
-  /// Parses a message from a sublist of the server response data.
+  /// Splits the response data into separate messages.
   ///
-  /// This method takes a sublist of the server response data and a callback function `onReadNextLine`.
-  /// The sublist should contain the lines of the response data that represent a single message.
-  /// The `onReadNextLine` function is called when the next line of the response data is read.
-  ///
-  /// The method extracts the data items and the UID from the response data and returns a `Message` object that holds this data.
+  /// This method is used in the context of the `UID FETCH` command to split the server response into separate messages.
+  /// Each message in the server response is represented as a list of strings, where each string is a line of the message.
   ///
   /// Parameters:
-  /// - `sublist`: A sublist of the server response data that represents a single message.
-  /// - `onReadNextLine`: A callback function that is called when the next line of the response data is read.
+  /// - `data`: The response data from the server, as a list of strings.
   ///
-  /// Returns a `Message` object that holds the data items and the UID extracted from the response data.
-  ///
+  /// Returns a map where the keys are the sequence numbers of the messages and the values are the messages themselves, represented as lists of strings.
+  /// @Stack: construct / _onData / _parseResponse
+  Map<int, List<List<String>>> _splitMessages(List<String> data) {
+    // 1. Split the message from the response data.
+    final result = <int, List<List<String>>>{};
+
+    int i = 0;
+    int? currentSequenceNumber;
+    final flush = <String>[];
+    // 1.1 A method to push the message to the result map.
+    void pushMessageToResult(int sequenceNumber, List<String> messages) {
+      if (!result.containsKey(sequenceNumber)) {
+        result[sequenceNumber] = [];
+      }
+
+      // 1.1.1 Add the message to the result map.
+      result[sequenceNumber]!.add(List<String>.from(flush));
+
+      // 1.1.2 Clear the flush buffer.
+      currentSequenceNumber = null;
+      flush.clear();
+    }
+
+    // 2. Extract the messages from the response data.
+    while (i < data.length) {
+      final line = data[i];
+      // 2.1 If the line starts with the sequence number, and then extract the sequence number.
+      // And then collect the previous message into the map.
+      if (fetchRegex.hasMatch(data[i])) {
+        // 2.1.1  If the previous message is not empty, and then collect it into the map.
+        if (currentSequenceNumber != null) {
+          pushMessageToResult(currentSequenceNumber!, flush);
+        }
+
+        // 2.1.2 Extract the sequence number from the line.
+        currentSequenceNumber = _extractSequenceNumber(data[i]);
+      }
+      // 2.2 Add the line to the flush buffer.
+      flush.add(line);
+      i++;
+
+      // 1.3 If the line is the last line, and then collect the message into the map.
+      if (i == data.length) {
+        pushMessageToResult(currentSequenceNumber!, flush);
+      }
+    }
+
+    return result;
+  }
+
   /// @Stack: constructor / _onData
-  Message _parseMessage(
-    List<String> data, {
-    required void Function() onReadNextLine,
-  }) {
-    // 1. Extract the sequence number of the message.
-    final int sequenceNumber = _extractSequenceNumber(data.first);
-
-    // 2. Remove the matched string in the first line.
-    data[0] = data.first.replaceFirst(fetchRegex, '');
-
-    // The count of rest of the data items.
-    int dataItemsLength = dataItems.length;
-
-    final Message message = Message(
+  Message _parseMessage(int sequenceNumber, List<List<String>> messages) {
+    final message = Message(
       sequenceNumber: sequenceNumber,
       dataItemMapResult: {},
     );
+    // 1. Extract the information from the message. the messageData like:
+    // ```plaintext
+    // * 8 FETCH (UID 152 FLAGS (\Seen))
+    // * 8 FETCH (UID 152 BODY[TEXT] {11}
+    // New email
+    //  BODY[HEADER.FIELDS (SUBJECT DATE)] {63}
+    // SUBJECT: hello
+    // DATE: Wed, 5 Jun 2024 17:30:42.385757 +0800
 
-    // 3. If the UID was existed in the query, and then extract the UID from the message.
-    final uidRegex = RegExp(r'UID \d+');
-    if (data.first.contains(uidRegex)) {
-      // 3.1 Extract the UID from the first line, and push it to the data items.
-      final match = uidRegex.firstMatch(data.first);
-      final matchStr = match?.group(0) as String;
-      final uid = int.parse(matchStr.split(' ')[1]);
-      message.dataItemMapResult['UID'] = uid.toString();
+    // )
+    // U2 OK FETCH completed (took 26 ms)
+    // ```
+    for (List<String> messageData in messages) {
+      String firstLine = messageData.first.replaceFirst(fetchRegex, '');
+      // 1.1 Try to extract the UID from the first line.
+      _tryExtractUid(
+        line: firstLine,
+        onExtractUid: (int uid) => message.dataItemMapResult['UID'] = '$uid',
+        onReturnRestOfLine: (String newLine) => firstLine = newLine,
+      );
 
-      // 3.2 Remove the matched string from the first line.
-      data[0] = data.first.replaceFirst(uidRegex, '');
+      // 1.2 Try to extract the `FLAGS` from the first line.
+      _tryExtractFlags(
+        line: firstLine,
+        onExtractFlags: (String flags) =>
+            message.dataItemMapResult['FLAGS'] = flags,
+        onReturnRestOfLine: (String newLine) => firstLine = newLine,
+      );
 
-      // 3.3 decrement the data items length.
-      dataItemsLength--;
-    }
-
-    // 3. Extract the data items of the message.
-    int nextLineIndex = 0;
-    for (int i = 0; i < dataItemsLength; i++) {
-      // 3.1 Extract the data items from the list of string, like:
-      // ```BODY[TEXT] {19}
-      // line1
-      // line2
-      // line3```
-      // 3.1.1 Extract the length and the name of the data item.
-      final dataItemInfo = data[nextLineIndex].split(' {');
-      final name = dataItemInfo[0].trim();
-      final length = int.parse(dataItemInfo[1].split('}')[0]);
-
-      // 3.1.2 Extract the data item content by looping over the lines with the length.
-      String value = '';
-      int readedLength = 0;
-      while (readedLength < length) {
-        // 4.  Read the next line and call the `onReadNextLine` callback to get the index of the next line to read.
-        nextLineIndex++;
-        onReadNextLine();
-
-        // 3.1.2.1  Add the next line to the value.
-        final line = data[nextLineIndex] + EOF;
-        value += line;
-        readedLength += line.length;
-      }
-
-      // 3.1.3 Add the data item to the message.
-      message.dataItemMapResult[name] = value;
-
-      // 3.2 Check if the next data item is available and then increment the index.
-      if (i + 1 < dataItems.length) {
-        nextLineIndex++;
-        onReadNextLine();
+      // 1.3 Try to extract the data items
+      List<String> restOfLines = [
+        firstLine,
+        ...(messageData.length > 1 ? messageData.sublist(1) : [])
+      ];
+      for (final _ in dataItems) {
+        // 1.3.1 If the data item is not included in the rest of the lines, and then break.
+        if (restOfLines.first.split(' {').length == 1) {
+          break;
+        }
+        // 1.3.2 Try to extract the data item from
+        _extractDataItem(
+            restOfLines: restOfLines,
+            onResult: ({
+              required String name,
+              required String value,
+              required List<String> newRestOfLines,
+            }) {
+              message.dataItemMapResult[name] = value;
+              restOfLines = newRestOfLines;
+            });
       }
     }
 
@@ -309,5 +336,80 @@ class UidFetch implements CommandAbstract<List<Message>> {
     final sequenceNumber = int.parse(capture.split(' ')[1]);
 
     return sequenceNumber;
+  }
+
+  // @Stack: construct / _onData / _parseResponse / _parseMessage
+  void _tryExtractUid({
+    required String line,
+    required void Function(int uid) onExtractUid,
+    required void Function(String restOfLine) onReturnRestOfLine,
+  }) {
+    final uidRegex = RegExp(r'UID \d+');
+    if (uidRegex.hasMatch(line)) {
+      final uidMatch = uidRegex.firstMatch(line);
+      final uid = int.parse(uidMatch?.group(0)?.split(' ')[1] as String);
+      onExtractUid(uid);
+      onReturnRestOfLine(line.replaceFirst(uidMatch?.group(0) as String, ''));
+    }
+  }
+
+  // @Stack: construct / _onData / _parseResponse / _parseMessage
+  void _tryExtractFlags({
+    required String line,
+    required String Function(String flags) onExtractFlags,
+    required String Function(String newLine) onReturnRestOfLine,
+  }) {
+    final flagsRegex = RegExp(r'FLAGS \([^\)]+\)');
+    // 1. Check if the line contains the `FLAGS` data item.
+    // Extract the flags from the line.
+    if (flagsRegex.hasMatch(line)) {
+      // 1.1 Extract the flags from the line.
+      final flagsMatch = flagsRegex.firstMatch(line);
+      final flags = flagsMatch?.group(0) as String;
+      final captureRegex = RegExp(r'\(([^\)]+)\)');
+      final match = captureRegex.firstMatch(flags);
+      final flagValue = match?.group(1) ?? '';
+
+      // 1.1 Return the flags and the rest of the line by callback.
+      onExtractFlags(flagValue);
+      onReturnRestOfLine(line.replaceFirst(flagsRegex, ''));
+    }
+  }
+
+// @Stack: construct / _onData / _parseResponse / _parseMessage
+  void _extractDataItem({
+    required List<String> restOfLines,
+    required void Function({
+      required String name,
+      required List<String> newRestOfLines,
+      required String value,
+    }) onResult,
+  }) {
+    int readLineIndex = 0;
+    // 1. Extract the name and length of the data item.
+    final dataItemInfo = restOfLines.first.split(' {');
+    final String name = dataItemInfo.first.trim();
+    final int length = int.parse(dataItemInfo.last.split('}').first);
+    readLineIndex++;
+
+    // 2 Extract the value of the data item.
+    String value = '';
+    while (value.length < length) {
+      // 2.1 Add the line to the value.
+      value += restOfLines[readLineIndex] + EOF;
+      readLineIndex++;
+
+      if (value.length > length) {
+        // 2.2 Remove the last EOF character from the value.
+        value = value.substring(0, value.length - 1);
+      }
+    }
+
+    // 3. Return the name, value, and the rest of the lines by callback.
+    onResult(
+      name: name,
+      value: value,
+      newRestOfLines: restOfLines.sublist(readLineIndex),
+    );
   }
 }

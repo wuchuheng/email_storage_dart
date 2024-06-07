@@ -55,7 +55,7 @@ class Fetch implements CommandAbstract<List<Message>> {
       throw ResponseException('The data items list cannot be empty.');
     }
     // 1.1 Check if the end sequence number is a wildcard.
-    if (endSequenceNumber != "*") {
+    if (endSequenceNumber.isNotEmpty && endSequenceNumber != "*") {
       // Check the end sequence number must be a number.
       if (int.tryParse(endSequenceNumber) == null) {
         throw ResponseException('The end sequence number must be a number.');
@@ -128,7 +128,7 @@ class Fetch implements CommandAbstract<List<Message>> {
   ///
   /// The method checks if each line starts with the tag of the current command.
   /// If it does, it indicates that the server
-  /// @Stack: constructor / _onData
+  /// @Stack: constructor
   void _onData(String data, Function() cancel) {
     for (final line in LineSplitter().convert(data)) {
       // 1. Write the line to the buffer.

@@ -99,8 +99,10 @@ class Append implements CommandAbstract<void> {
       // 4.1 If the response is a tagged response.
       if (line.startsWith(_request.tag)) {
         try {
-          final response =
-              ResponseUtile.parseResponse(response: _flush, tag: _request.tag);
+          final response = ResponseUtile.parseResponse(
+            response: _flush,
+            tag: _request.tag,
+          );
           _completerResponse.complete(response);
         } catch (e) {
           _completerResponse.completeError(e);

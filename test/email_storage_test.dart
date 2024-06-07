@@ -1,9 +1,12 @@
 @Timeout(Duration(seconds: 100))
+import 'dart:async';
+
 import 'package:test/test.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/address.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/folder.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/mail.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/mailbox.dart';
+import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/dto/response/response.dart';
 import 'package:wuchuheng_email_storage/src/tcp_clients/imap_client/imap_client.dart';
 
 import 'integration_test/env.dart';
@@ -26,7 +29,7 @@ void main() {
       timeout: Duration(seconds: 5),
     );
 
-    // 3. Connect to the IMAP server.
+    const testMailboxName = 'INBOX';
     test('Test IMAP client connection', () async => await imapClient.connect());
     test(
       'Test the `CAPABILITY` command.',
@@ -40,7 +43,7 @@ void main() {
 
     late Mailbox selectedMailbox;
     test('Test the `SELECT` command.', () async {
-      final res = await imapClient.select(mailbox: 'INBOX');
+      final res = await imapClient.select(mailbox: testMailboxName);
       selectedMailbox = res.data;
       selectedMailbox.exists;
     });
@@ -49,20 +52,20 @@ void main() {
       final result = await imapClient.list(pattern: '*', name: '');
       folders = result.data;
     });
-    const testMailboxName = 'test';
+    const tmpBoxName = 'test';
     test('Test the `CREATE` command.', () async {
       final isCreatedMailbox =
-          folders.indexWhere((el) => el.name == testMailboxName) != -1;
+          folders.indexWhere((el) => el.name == tmpBoxName) != -1;
       // If the mailbox is created, delete it.
       if (isCreatedMailbox) {
-        await imapClient.delete(mailbox: testMailboxName);
+        await imapClient.delete(mailbox: tmpBoxName);
       }
 
-      await imapClient.create(mailbox: testMailboxName);
+      await imapClient.create(mailbox: tmpBoxName);
     });
 
     test('Test the command `DELETE`', () async {
-      await imapClient.delete(mailbox: testMailboxName);
+      await imapClient.delete(mailbox: tmpBoxName);
     });
 
     test('Test the `APPEND` command.', () async {
@@ -71,41 +74,83 @@ void main() {
         from: Address(name: 'Wu', address: account.username),
         body: """New email""",
       );
-      await imapClient.append(mailbox: 'INBOX', mail: mail);
+      final res = await imapClient.append(mailbox: testMailboxName, mail: mail);
+      res.data;
     });
 
     test('Test the `FETCH` command.', () async {
       final res = await imapClient.fetch(
         startSequenceNumber: 1,
-        endSequenceNumber: '2',
         dataItems: ['BODY[TEXT]', 'BODY[HEADER.FIELDS (SUBJECT DATE)]', 'UID'],
       );
       res.data;
     });
 
+    Future<Mailbox> selecteMailbox(String mailboxName) async {
+      final Response<Mailbox> res =
+          await imapClient.select(mailbox: mailboxName);
+      return res.data;
+    }
+
     test('Test the `UID FETCH` command.', () async {
+      final Mailbox selectedMailbox = await selecteMailbox(testMailboxName);
+      final queryDataItem = [
+        'BODY[TEXT]',
+        'BODY[HEADER.FIELDS (SUBJECT DATE)]',
+        'UID'
+      ];
       var res = await imapClient.uidFetch(
         startUid:
             selectedMailbox.uidNext == 1 ? 1 : selectedMailbox.uidNext - 1,
-        dataItems: ['BODY[TEXT]', 'BODY[HEADER.FIELDS (SUBJECT DATE)]', 'UID'],
+        dataItems: queryDataItem,
       );
+
+      void testGroup() {
+        expect(true, res.data.isNotEmpty);
+        for (final mail in res.data) {
+          for (final dataItem in queryDataItem) {
+            expect(mail.dataItemMapResult[dataItem]?.isNotEmpty, true);
+          }
+        }
+      }
+
       expect(res.data.length, 1);
+      testGroup();
       res = await imapClient.uidFetch(
         startUid:
             selectedMailbox.uidNext == 1 ? 1 : selectedMailbox.uidNext - 1,
         endUid: '*',
-        dataItems: ['BODY[TEXT]', 'BODY[HEADER.FIELDS (SUBJECT DATE)]', 'UID'],
+        dataItems: queryDataItem,
       );
-      expect(true, res.data.isNotEmpty);
+      testGroup();
     });
 
     test('Test the `UID STORE` command.', () async {
+      final selectedMailbox = await selecteMailbox(testMailboxName);
       final res = await imapClient.uidStore(
         startUid: selectedMailbox.uidNext - 1,
         endUid: '*',
         dataItems: ['+FLAGS', '(\\Deleted)'],
       );
       res.data;
+    });
+
+    test('Test the `UID EXPUNGE` command.', () async {
+      // 1. Select the mailbox.
+      Mailbox selectedMailbox = await selecteMailbox(testMailboxName);
+
+      // 2. Delete the last email.
+      final uid = selectedMailbox.uidNext - 1;
+      await imapClient.uidExpunge(
+        startUid: uid,
+        endUid: '*',
+      );
+
+      // 3. Check the number of emails in the mailbox.
+      final oldExists = selectedMailbox.exists;
+      selectedMailbox = await selecteMailbox(testMailboxName);
+      final newExists = selectedMailbox.exists;
+      expect(newExists, oldExists - 1);
     });
   });
 }

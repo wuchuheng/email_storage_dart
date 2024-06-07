@@ -84,11 +84,10 @@ class ResponseUtile {
     validateFormat(response, tag);
 
     // 2. Parse the code from the last line of the response.
-    String code =
-        response.last.substring(tag.length + 1).split(' ').skip(1).first;
+    String lastLine = response.last.substring(tag.length + 1);
     // 2.1 Check the response code exists and then remove it from the message.
     RegExp exp = RegExp(r'\[([^\]]+)\]');
-    final String result = exp.firstMatch(code)?.group(1) ?? '';
+    final String result = exp.firstMatch(lastLine)?.group(1) ?? '';
 
     return result;
   }
