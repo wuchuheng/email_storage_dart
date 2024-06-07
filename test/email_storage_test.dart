@@ -79,11 +79,24 @@ void main() {
     });
 
     test('Test the `FETCH` command.', () async {
+      // 1. Fetch the first email.
+      final List<String> dataItems = [
+        'BODY[TEXT]',
+        'BODY[HEADER.FIELDS (SUBJECT DATE)]',
+        'UID'
+      ];
       final res = await imapClient.fetch(
         startSequenceNumber: 1,
-        dataItems: ['BODY[TEXT]', 'BODY[HEADER.FIELDS (SUBJECT DATE)]', 'UID'],
+        dataItems: dataItems,
       );
-      res.data;
+
+      // 2. Check if the data items are existed or not.
+      expect(res.data.isNotEmpty, true);
+      for (final mail in res.data) {
+        for (final dataItem in dataItems) {
+          expect(mail.dataItemMapResult[dataItem]?.isNotEmpty, true);
+        }
+      }
     });
 
     Future<Mailbox> selecteMailbox(String mailboxName) async {
